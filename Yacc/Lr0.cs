@@ -43,7 +43,7 @@ namespace Yacc
 {
 	class Lr0<ActionType>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #endif //
 
@@ -72,13 +72,11 @@ namespace Yacc
 			m_Closure = new Closure<ActionType>(yacc);
 		}
 
-		public ReadOnlyCollection<State<ActionType>> States
-		{
+		public ReadOnlyCollection<State<ActionType>> States {
 			get { return m_States.AsReadOnly(); }
 		}
 
-		public ReadOnlyCollection<Shifts<ActionType>> Shiftses
-		{
+		public ReadOnlyCollection<Shifts<ActionType>> Shiftses {
 			get { return m_Shiftses.AsReadOnly(); }
 		}
 
@@ -96,11 +94,9 @@ namespace Yacc
 			symbol_count = new short[m_Yacc.m_Symbols.Length];
 
 			item_end = m_Yacc.m_Items.Length;
-			for (itemp = 0; itemp < item_end; itemp++)
-			{
+			for (itemp = 0; itemp < item_end; itemp++) {
 				symbolIndex = m_Yacc.m_Items[itemp];
-				if (symbolIndex >= 0)
-				{
+				if (symbolIndex >= 0) {
 					count++;
 					symbol_count[symbolIndex]++;
 				}
@@ -110,8 +106,7 @@ namespace Yacc
 			m_KernelItems = new short[count];
 
 			count = 0;
-			for (i = 0; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = 0; i < m_Yacc.m_Symbols.Length; i++) {
 				j = symbol_count[i];
 				m_KernelBase[i] = count;
 				symbol = m_Yacc.m_Symbols[i];
@@ -138,24 +133,20 @@ namespace Yacc
 			if (m_Yacc.TraceWriter != null)
 				m_Yacc.TraceWriter.Write("Entering append_states()\n");
 #endif
-			for (i = 1; i < m_ShiftCount; i++)
-			{
+			for (i = 1; i < m_ShiftCount; i++) {
 				symbol = m_Yacc.m_Symbols[i].Shift;
 				j = i;
-				while (j > 0 && m_Yacc.m_Symbols[j - 1].Shift > symbol)
-				{
+				while (j > 0 && m_Yacc.m_Symbols[j - 1].Shift > symbol) {
 					m_Yacc.m_Symbols[j].Shift = m_Yacc.m_Symbols[j - 1].Shift;
 					j--;
 				}
 				m_Yacc.m_Symbols[j].Shift = (short)symbol;
 			}
 
-			if (m_ShiftCount > 0)
-			{
+			if (m_ShiftCount > 0) {
 				m_Shifts = new Shifts<ActionType>(m_CurrentState, m_ShiftCount);
 
-				for (i = 0; i < m_ShiftCount; i++)
-				{
+				for (i = 0; i < m_ShiftCount; i++) {
 					symbol = m_Yacc.m_Symbols[i].Shift;
 					m_Shifts.Shift[i] = GetState(m_Yacc.m_Symbols[symbol]);
 				}
@@ -172,8 +163,7 @@ namespace Yacc
 			m_Closure.SetFirstDerives();
 			InitializeStates();
 
-			while (m_CurrentState != null)
-			{
+			while (m_CurrentState != null) {
 				m_Closure.Execute(m_CurrentState.Items, m_CurrentState.Items.Length);
 				SaveReductions();
 				NewItemsets();
@@ -211,40 +201,32 @@ namespace Yacc
 			key = m_KernelItems[isp1];
 			System.Diagnostics.Debug.Assert(0 <= key && key < m_Yacc.m_Items.Length);
 			sp = m_StateSet[key];
-			if (sp != null)
-			{
+			if (sp != null) {
 				found = false;
-				while (!found)
-				{
-					if (sp.Items.Length == n)
-					{
+				while (!found) {
+					if (sp.Items.Length == n) {
 						found = true;
 						isp1 = m_KernelBase[symbol.Index];
 						isp2 = 0;
 
-						while (found && isp1 < iend)
-						{
+						while (found && isp1 < iend) {
 							if (m_KernelItems[isp1++] != sp.Items[isp2++])
 								found = false;
 						}
 					}
 
-					if (!found)
-					{
-						if (sp.Link != null)
-						{
+					if (!found) {
+						if (sp.Link != null) {
 							sp = sp.Link;
 						}
-						else
-						{
+						else {
 							sp = sp.Link = NewState(symbol);
 							found = true;
 						}
 					}
 				}
 			}
-			else
-			{
+			else {
 				m_StateSet[key] = sp = NewState(symbol);
 			}
 
@@ -286,15 +268,12 @@ namespace Yacc
 
 			shiftcount = 0;
 			isp = 0;
-			while (isp < m_Closure.ItemSetEnd)
-			{
+			while (isp < m_Closure.ItemSetEnd) {
 				i = m_Closure.ItemSet[isp++];
 				symbol = m_Yacc.m_Items[i];
-				if (symbol > 0)
-				{
+				if (symbol > 0) {
 					ksp = m_KernelEnd[symbol];
-					if (ksp == -1)
-					{
+					if (ksp == -1) {
 						m_Yacc.m_Symbols[shiftcount++].Shift = m_Yacc.m_Symbols[symbol].Index;
 						ksp = m_KernelBase[symbol];
 					}
@@ -348,15 +327,13 @@ namespace Yacc
 			int i, j, k, n;
 			int itemno;
 
-			for (k = 0; k < m_States.Count; k++)
-			{
+			for (k = 0; k < m_States.Count; k++) {
 				State<ActionType> p = m_States[k];
 				if (k != 0) stream.Write("\n");
 				stream.Write("state {0}, number = {1}, accessing symbol = {2}\n",
 					k, p.Number, p.AccessingSymbol.Name);
 				n = p.Items.Length;
-				for (i = 0; i < n; ++i)
-				{
+				for (i = 0; i < n; ++i) {
 					itemno = p.Items[i];
 					stream.Write("{0,4}  ", itemno);
 					j = itemno;
@@ -402,8 +379,7 @@ namespace Yacc
 		{
 			int i, j, k;
 
-			for (k = 0; k < m_Shiftses.Count; k++)
-			{
+			for (k = 0; k < m_Shiftses.Count; k++) {
 				Shifts<ActionType> p = m_Shiftses[k];
 				if (k != 0) stream.Write("\n");
 				stream.Write("shift {0}, number = {1}, nshifts = {2}\n", k, p.State.Number,
@@ -422,17 +398,14 @@ namespace Yacc
 
 			p = new Reductions<ActionType>(m_CurrentState);
 
-			for (isp = 0; isp < m_Closure.ItemSetEnd; isp++)
-			{
+			for (isp = 0; isp < m_Closure.ItemSetEnd; isp++) {
 				item = m_Yacc.m_Items[m_Closure.ItemSet[isp]];
-				if (item < 0)
-				{
+				if (item < 0) {
 					p.Rules.Add((short)(-item));
 				}
 			}
 
-			if (p.Rules.Count != 0)
-			{
+			if (p.Rules.Count != 0) {
 				m_CurrentState.Reductions = p;
 			}
 		}
@@ -445,14 +418,11 @@ namespace Yacc
 			m_Yacc.m_Derives = new Rule<ActionType>[m_Yacc.m_VarCount + m_Yacc.m_RuleCount];
 
 			k = 0;
-			for (lhs = m_Yacc.m_StartSymbol; lhs < m_Yacc.m_Symbols.Length; lhs++)
-			{
+			for (lhs = m_Yacc.m_StartSymbol; lhs < m_Yacc.m_Symbols.Length; lhs++) {
 				m_Yacc.m_Symbols[lhs].Derives = k;
-				for (i = 0; i < m_Yacc.m_RuleCount; i++)
-				{
+				for (i = 0; i < m_Yacc.m_RuleCount; i++) {
 					Rule<ActionType> rule = m_Yacc.m_Rules[i];
-					if (rule.Lhs.Index == lhs)
-					{
+					if (rule.Lhs.Index == lhs) {
 						m_Yacc.m_Derives[k] = rule;
 						k++;
 					}
@@ -476,11 +446,9 @@ namespace Yacc
 
 			m_Yacc.TraceWriter.Write("\nDERIVES\n\n");
 
-			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++) {
 				m_Yacc.TraceWriter.Write("{0} derives ", m_Yacc.m_Symbols[i].Name);
-				for (sp = m_Yacc.m_Symbols[i].Derives; m_Yacc.m_Derives[sp] != null; sp++)
-				{
+				for (sp = m_Yacc.m_Symbols[i].Derives; m_Yacc.m_Derives[sp] != null; sp++) {
 					m_Yacc.TraceWriter.Write("  {0}", m_Yacc.m_Derives[sp].Number);
 				}
 				m_Yacc.TraceWriter.Write('\n');
@@ -500,23 +468,18 @@ namespace Yacc
 				m_Yacc.m_Symbols[i].Nullable = false;
 
 			done = false;
-			while (!done)
-			{
+			while (!done) {
 				done = true;
-				for (i = 1; i < m_Yacc.m_Items.Length; i++)
-				{
+				for (i = 1; i < m_Yacc.m_Items.Length; i++) {
 					empty = true;
-					while ((j = m_Yacc.m_Items[i]) >= 0)
-					{
+					while ((j = m_Yacc.m_Items[i]) >= 0) {
 						if (!m_Yacc.m_Symbols[j].Nullable)
 							empty = false;
 						++i;
 					}
-					if (empty)
-					{
+					if (empty) {
 						Symbol symbol = m_Yacc.m_Rules[-j].Lhs;
-						if (!symbol.Nullable)
-						{
+						if (!symbol.Nullable) {
 							symbol.Nullable = true;
 							done = false;
 						}
@@ -536,8 +499,7 @@ namespace Yacc
 			if (m_Yacc.TraceWriter == null)
 				return;
 
-			for (i = 0; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = 0; i < m_Yacc.m_Symbols.Length; i++) {
 				if (m_Yacc.m_Symbols[i].Nullable)
 					m_Yacc.TraceWriter.Write("{0} is nullable\n", m_Yacc.m_Symbols[i].Name);
 				else
@@ -545,7 +507,7 @@ namespace Yacc
 			}
 		}
 #endif
-        public void Execute()
+		public void Execute()
 		{
 			SetDerives();
 			SetNullable();

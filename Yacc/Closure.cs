@@ -60,20 +60,17 @@ namespace Yacc
 			this.m_Yacc = yacc;
 		}
 
-		public short[] ItemSet
-		{
+		public short[] ItemSet {
 			get { return m_ItemSet; }
 			set { m_ItemSet = value; }
 		}
 
-		public int ItemSetEnd
-		{
+		public int ItemSetEnd {
 			get { return m_ItemSetEnd; }
 			set { m_ItemSetEnd = value; }
 		}
 
-		public uint[] RuleSet
-		{
+		public uint[] RuleSet {
 			get { return m_RuleSet; }
 			set { m_RuleSet = value; }
 		}
@@ -91,14 +88,11 @@ namespace Yacc
 			m_EFF = new uint[m_Yacc.m_VarCount * rowsize];
 
 			row = 0;
-			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++) {
 				sp = m_Yacc.m_Symbols[i].Derives;
-				for (j = 0, rule = m_Yacc.m_Derives[sp + j]; rule != null; ++j, rule = m_Yacc.m_Derives[sp + j])
-				{
+				for (j = 0, rule = m_Yacc.m_Derives[sp + j]; rule != null; ++j, rule = m_Yacc.m_Derives[sp + j]) {
 					symbol = m_Yacc.m_Items[rule.Rhs];
-					if (m_Yacc.IsVar(symbol))
-					{
+					if (m_Yacc.IsVar(symbol)) {
 						symbol -= m_Yacc.m_StartSymbol;
 						Defs.SETBIT(m_EFF, row, symbol);
 					}
@@ -136,24 +130,19 @@ namespace Yacc
 			SetEFF();
 
 			rrow = 0;
-			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++) {
 				vrow = ((i - m_Yacc.m_TokenCount) * varsetsize);
 				k = Defs.BITS_PER_WORD;
-				for (j = m_Yacc.m_StartSymbol; j < m_Yacc.m_Symbols.Length; k++, j++)
-				{
-					if (k >= Defs.BITS_PER_WORD)
-					{
+				for (j = m_Yacc.m_StartSymbol; j < m_Yacc.m_Symbols.Length; k++, j++) {
+					if (k >= Defs.BITS_PER_WORD) {
 						cword = m_EFF[vrow++];
 						k = 0;
 					}
 
-					if ((cword & (1u << k)) != 0)
-					{
+					if ((cword & (1u << k)) != 0) {
 						rp = m_Yacc.m_Symbols[j].Derives;
 						r = 0;
-						while ((rule = m_Yacc.m_Derives[rp + (r++)]) != null)
-						{
+						while ((rule = m_Yacc.m_Derives[rp + (r++)]) != null) {
 							Defs.SETBIT(m_FirstDerivesInst, rrow, rule.Number);
 						}
 					}
@@ -190,11 +179,9 @@ namespace Yacc
 				m_RuleSet[rsp] = 0;
 
 			csend = n;
-			for (csp = 0; csp < csend; ++csp)
-			{
+			for (csp = 0; csp < csend; ++csp) {
 				symbol = m_Yacc.m_Items[nucleus[csp]];
-				if (m_Yacc.IsVar(symbol))
-				{
+				if (m_Yacc.IsVar(symbol)) {
 					dsp = m_FirstDerives + symbol * rulesetsize;
 					rsp = 0;
 					while (rsp < rsend)
@@ -205,15 +192,11 @@ namespace Yacc
 			ruleno = 0;
 			m_ItemSetEnd = 0;
 			csp = 0;
-			for (rsp = 0; rsp < rsend; ++rsp)
-			{
+			for (rsp = 0; rsp < rsend; ++rsp) {
 				word = m_RuleSet[rsp];
-				if (word != 0)
-				{
-					for (i = 0; i < Defs.BITS_PER_WORD; ++i)
-					{
-						if ((word & (1 << i)) != 0)
-						{
+				if (word != 0) {
+					for (i = 0; i < Defs.BITS_PER_WORD; ++i) {
+						if ((word & (1 << i)) != 0) {
 							itemno = m_Yacc.m_Rules[ruleno + i].Rhs;
 							while (csp < csend && nucleus[csp] < itemno)
 								m_ItemSet[m_ItemSetEnd++] = nucleus[csp++];
@@ -265,17 +248,14 @@ namespace Yacc
 
 			m_Yacc.TraceWriter.Write("\n\nEpsilon Free Firsts\n");
 
-			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++) {
 				m_Yacc.TraceWriter.Write("\n{0}", m_Yacc.m_Symbols[i].Name);
 				rowp = ((i - m_Yacc.m_StartSymbol) * Defs.WORDSIZE(m_Yacc.m_VarCount));
 				word = m_EFF[rowp++];
 
 				k = Defs.BITS_PER_WORD;
-				for (j = 0; j < m_Yacc.m_VarCount; k++, j++)
-				{
-					if (k >= Defs.BITS_PER_WORD)
-					{
+				for (j = 0; j < m_Yacc.m_VarCount; k++, j++) {
+					if (k >= Defs.BITS_PER_WORD) {
 						word = (rowp < m_EFF.Length) ? m_EFF[rowp++] : 0;
 
 						k = 0;
@@ -301,15 +281,12 @@ namespace Yacc
 
 			m_Yacc.TraceWriter.Write("\n\n\nFirst Derives\n");
 
-			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_StartSymbol; i < m_Yacc.m_Symbols.Length; i++) {
 				m_Yacc.TraceWriter.Write("\n{0} derives\n", m_Yacc.m_Symbols[i].Name);
 				rp = m_FirstDerives + i * Defs.WORDSIZE(m_Yacc.m_RuleCount);
 				k = Defs.BITS_PER_WORD;
-				for (j = 0; j <= m_Yacc.m_RuleCount; k++, j++)
-				{
-					if (k >= Defs.BITS_PER_WORD)
-					{
+				for (j = 0; j <= m_Yacc.m_RuleCount; k++, j++) {
+					if (k >= Defs.BITS_PER_WORD) {
 						cword = m_FirstDerivesInst[rp++];
 						k = 0;
 					}
@@ -322,5 +299,5 @@ namespace Yacc
 			m_Yacc.TraceWriter.Flush();
 		}
 #endif
-    }
+	}
 }

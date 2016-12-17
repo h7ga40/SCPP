@@ -139,61 +139,51 @@ namespace Yacc
 			m_Class = SymbolClasse.UNKNOWN;
 		}
 
-		public string Name
-		{
+		public string Name {
 			get { return m_Name; }
 		}
 
-		public short Value
-		{
+		public short Value {
 			get { return m_Value; }
 			internal set { m_Value = value; }
 		}
 
-		public string Tag
-		{
+		public string Tag {
 			get { return m_Tag; }
 			internal set { m_Tag = value; }
 		}
 
-		public short Index
-		{
+		public short Index {
 			get { return m_Index; }
 			internal set { m_Index = value; }
 		}
 
-		public SymbolClasse Class
-		{
+		public SymbolClasse Class {
 			get { return m_Class; }
 			internal set { m_Class = value; }
 		}
 
-		public short Precedence
-		{
+		public short Precedence {
 			get { return m_Precedence; }
 			internal set { m_Precedence = value; }
 		}
 
-		public KeywordCode Association
-		{
+		public KeywordCode Association {
 			get { return m_Association; }
 			internal set { m_Association = value; }
 		}
 
-		public short Shift
-		{
+		public short Shift {
 			get { return m_Shift; }
 			internal set { m_Shift = value; }
 		}
 
-		public bool Nullable
-		{
+		public bool Nullable {
 			get { return m_Nullable; }
 			internal set { m_Nullable = value; }
 		}
 
-		public int Derives
-		{
+		public int Derives {
 			get { return m_Derives; }
 			internal set { m_Derives = value; }
 		}
@@ -240,14 +230,12 @@ namespace Yacc
 			Association = assoc;
 		}
 
-		internal ActionType Action
-		{
+		internal ActionType Action {
 			get { return m_Action; }
 			set { m_Action = value; }
 		}
 
-		internal int Offset
-		{
+		internal int Offset {
 			get { return m_Offset; }
 			set { m_Offset = value; }
 		}

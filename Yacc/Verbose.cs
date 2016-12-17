@@ -42,7 +42,7 @@ namespace Yacc
 {
 	public class Verbose<ActionType>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #endif // not lint
 
@@ -53,7 +53,7 @@ namespace Yacc
 		private Lalr<ActionType> m_Lalr;
 		private MakeParser<ActionType> m_MakeParser;
 
-		private TextWriter m_VerboseWriter;	/*  y.output					    */
+		private TextWriter m_VerboseWriter; /*  y.output					    */
 
 		public Verbose(Yacc<ActionType> yacc)
 		{
@@ -63,8 +63,7 @@ namespace Yacc
 			m_Lr0 = yacc.Lr0;
 		}
 
-		public TextWriter VerboseWriter
-		{
+		public TextWriter VerboseWriter {
 			get { return m_VerboseWriter; }
 			set { m_VerboseWriter = value; }
 		}
@@ -96,24 +95,20 @@ namespace Yacc
 			int spacing = 0;
 
 			k = 1;
-			for (i = 2; i < m_Yacc.m_RuleCount; ++i)
-			{
-				if (m_Yacc.m_Rules[i].Lhs != m_Yacc.m_Rules[i - 1].Lhs)
-				{
+			for (i = 2; i < m_Yacc.m_RuleCount; ++i) {
+				if (m_Yacc.m_Rules[i].Lhs != m_Yacc.m_Rules[i - 1].Lhs) {
 					if (i != 2) m_VerboseWriter.Write("\n");
 					m_VerboseWriter.Write("{0,4}  {1} :", i - 2, m_Yacc.m_Rules[i].Lhs.Name);
 					spacing = m_Yacc.m_Rules[i].Lhs.Name.Length + 1;
 				}
-				else
-				{
+				else {
 					m_VerboseWriter.Write("{0,4}  ", i - 2);
 					j = spacing;
 					while (--j >= 0) m_VerboseWriter.Write(' ');
 					m_VerboseWriter.Write('|');
 				}
 
-				while (m_Yacc.m_Items[k] >= 0)
-				{
+				while (m_Yacc.m_Items[k] >= 0) {
 					m_VerboseWriter.Write(" {0}", m_Yacc.m_Symbols[m_Yacc.m_Items[k]].Name);
 					++k;
 				}
@@ -128,10 +123,8 @@ namespace Yacc
 			int p;
 
 			m_VerboseWriter.Write("\n\nRules never reduced:\n");
-			for (i = 3; i < m_Yacc.m_RuleCount; ++i)
-			{
-				if (m_MakeParser.rules_used[i] == 0)
-				{
+			for (i = 3; i < m_Yacc.m_RuleCount; ++i) {
+				if (m_MakeParser.rules_used[i] == 0) {
 					m_VerboseWriter.Write("\t{0} :", m_Yacc.m_Rules[i].Lhs.Name);
 					for (p = m_Yacc.m_Rules[i].Rhs; m_Yacc.m_Items[p] >= 0; ++p)
 						m_VerboseWriter.Write(" {0}", m_Yacc.m_Symbols[m_Yacc.m_Items[p]].Name);
@@ -145,10 +138,8 @@ namespace Yacc
 			int i;
 
 			m_VerboseWriter.Write("\n\n");
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
-				if (m_MakeParser.SRconflicts[i] != 0 || m_MakeParser.RRconflicts[i] != 0)
-				{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
+				if (m_MakeParser.SRconflicts[i] != 0 || m_MakeParser.RRconflicts[i] != 0) {
 					m_VerboseWriter.Write("State {0} contains ", i);
 					if (m_MakeParser.SRconflicts[i] == 1)
 						m_VerboseWriter.Write("1 shift/reduce conflict");
@@ -186,13 +177,11 @@ namespace Yacc
 			ActionCode act = ActionCode.NONE;
 
 			symbol = null;
-			foreach (Action<ActionType> p in core.Parser)
-			{
+			foreach (Action<ActionType> p in core.Parser) {
 				if (p.Suppressed == 2)
 					continue;
 
-				if (p.Symbol != symbol)
-				{
+				if (p.Symbol != symbol) {
 					symbol = p.Symbol;
 					number = p.Rule.Number;
 					if (p.ActionCode == ActionCode.SHIFT)
@@ -200,23 +189,18 @@ namespace Yacc
 					else
 						act = ActionCode.REDUCE;
 				}
-				else if (p.Suppressed == 1)
-				{
-					if (core.Number == m_Yacc.m_FinalState && symbol == m_Yacc.m_Symbols[0])
-					{
+				else if (p.Suppressed == 1) {
+					if (core.Number == m_Yacc.m_FinalState && symbol == m_Yacc.m_Symbols[0]) {
 						m_VerboseWriter.Write("{0}: shift/reduce conflict "
 							+ "(accept, reduce {1}) on $end\n", core.Number, p.Rule.Number - 2);
 					}
-					else
-					{
-						if (act == ActionCode.SHIFT)
-						{
+					else {
+						if (act == ActionCode.SHIFT) {
 							m_VerboseWriter.Write("{0}: shift/reduce conflict "
 								+ "(shift {1}, reduce {2}) on {3}\n", core.Number, number, p.Rule.Number - 2,
 								symbol.Name);
 						}
-						else
-						{
+						else {
 							m_VerboseWriter.Write("{0}: reduce/reduce conflict "
 								+ "(reduce {1}, reduce {2}) on {3}\n", core.Number, number - 2, p.Rule.Number - 2,
 								symbol.Name);
@@ -238,8 +222,7 @@ namespace Yacc
 			statep = m_Lr0.States[state];
 			k = statep.Items.Length;
 
-			for (i = 0; i < k; i++)
-			{
+			for (i = 0; i < k; i++) {
 				sp1 = sp = statep.Items[i];
 
 				while (m_Yacc.m_Items[sp] >= 0) ++sp;
@@ -251,8 +234,7 @@ namespace Yacc
 
 				m_VerboseWriter.Write('.');
 
-				while (m_Yacc.m_Items[sp] >= 0)
-				{
+				while (m_Yacc.m_Items[sp] >= 0) {
 					m_VerboseWriter.Write(" {0}", m_Yacc.m_Symbols[m_Yacc.m_Items[sp]].Name);
 					sp++;
 				}
@@ -266,24 +248,19 @@ namespace Yacc
 			int j, k, nnulls;
 
 			nnulls = 0;
-			foreach (Action<ActionType> p in core.Parser)
-			{
+			foreach (Action<ActionType> p in core.Parser) {
 				if (p.ActionCode == ActionCode.REDUCE &&
-					(p.Suppressed == 0 || p.Suppressed == 1))
-				{
+					(p.Suppressed == 0 || p.Suppressed == 1)) {
 					i = p.Rule.Number;
-					if (m_Yacc.m_Rules[i].Rhs + 1 == m_Yacc.m_Rules[i + 1].Rhs)
-					{
+					if (m_Yacc.m_Rules[i].Rhs + 1 == m_Yacc.m_Rules[i + 1].Rhs) {
 						for (j = 0; j < nnulls && i > null_rules[j]; ++j)
 							continue;
 
-						if (j == nnulls)
-						{
+						if (j == nnulls) {
 							++nnulls;
 							null_rules[j] = i;
 						}
-						else if (i != null_rules[j])
-						{
+						else if (i != null_rules[j]) {
 							++nnulls;
 							for (k = nnulls - 1; k > j; --k)
 								null_rules[k] = null_rules[k - 1];
@@ -293,8 +270,7 @@ namespace Yacc
 				}
 			}
 
-			for (i = 0; i < nnulls; ++i)
-			{
+			for (i = 0; i < nnulls; ++i) {
 				j = null_rules[i];
 				m_VerboseWriter.Write("\t{0} : .  ({1})\n", m_Yacc.m_Rules[j].Lhs.Name,
 					j - 2);
@@ -312,15 +288,13 @@ namespace Yacc
 				m_VerboseWriter.Write("\t$end  accept\n");
 
 			p = core.Parser;
-			if (p.Count != 0)
-			{
+			if (p.Count != 0) {
 				PrintShifts(p);
 				PrintReductions(p, m_MakeParser.defred[core.Number]);
 			}
 
 			sp = m_Lr0.States[core.Number].Shifts;
-			if (sp != null && sp.Shift.Length > 0)
-			{
+			if (sp != null && sp.Shift.Length > 0) {
 				As = sp.Shift[sp.Shift.Length - 1].AccessingSymbol.Index;
 				if (m_Yacc.IsVar(As))
 					PrintGotos(core.Number);
@@ -332,16 +306,13 @@ namespace Yacc
 			int count;
 
 			count = 0;
-			foreach (Action<ActionType> q in p)
-			{
+			foreach (Action<ActionType> q in p) {
 				if (q.Suppressed < 2 && q.ActionCode == ActionCode.SHIFT)
 					++count;
 			}
 
-			if (count > 0)
-			{
-				foreach (Action<ActionType> q in p)
-				{
+			if (count > 0) {
+				foreach (Action<ActionType> q in p) {
 					if (q.ActionCode == ActionCode.SHIFT && q.Suppressed == 0)
 						m_VerboseWriter.Write("\t{0}  shift {1}\n",
 							q.Symbol.Name, q.Rule.Number);
@@ -354,10 +325,8 @@ namespace Yacc
 			int k, anyreds;
 
 			anyreds = 0;
-			foreach (Action<ActionType> q in p)
-			{
-				if (q.ActionCode == ActionCode.REDUCE && q.Suppressed < 2)
-				{
+			foreach (Action<ActionType> q in p) {
+				if (q.ActionCode == ActionCode.REDUCE && q.Suppressed < 2) {
 					anyreds = 1;
 					break;
 				}
@@ -365,12 +334,9 @@ namespace Yacc
 
 			if (anyreds == 0)
 				m_VerboseWriter.Write("\t.  error\n");
-			else
-			{
-				foreach (Action<ActionType> q in p)
-				{
-					if (q.ActionCode == ActionCode.REDUCE && q.Rule.Number != defred)
-					{
+			else {
+				foreach (Action<ActionType> q in p) {
+					if (q.ActionCode == ActionCode.REDUCE && q.Rule.Number != defred) {
 						k = q.Rule.Number - 2;
 						if (q.Suppressed == 0)
 							m_VerboseWriter.Write("\t{0}  reduce {1}\n",
@@ -394,8 +360,7 @@ namespace Yacc
 			m_VerboseWriter.Write('\n');
 			sp = m_Lr0.States[stateno].Shifts;
 			to_state = sp.Shift;
-			for (i = 0; i < sp.Shift.Length; ++i)
-			{
+			for (i = 0; i < sp.Shift.Length; ++i) {
 				k = to_state[i];
 				As = k.AccessingSymbol.Index;
 				if (m_Yacc.IsVar(As))

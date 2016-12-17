@@ -42,7 +42,7 @@ namespace Yacc
 {
 	public class Reader : Grammar<string>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #endif // not lint
 
@@ -56,9 +56,11 @@ namespace Yacc
 		private int m_ColumnNo;
 		private string m_Line;
 
-		private TextReader m_InputFile;	/*  the input file				    */
+		private string m_InputFileName;
+		private TextReader m_InputFile; /*  the input file				    */
 		private Output m_Output;
 		private Rules m_CurrentRule;
+		private bool m_ZeroBase;
 
 		public Reader(Yacc<string> yacc, Output output)
 			: base(yacc)
@@ -68,10 +70,19 @@ namespace Yacc
 
 		private static bool IsOctal(int c) { return ((c) >= '0' && (c) <= '7'); }
 
-		public TextReader InputFile
-		{
+		public string InputFileName {
+			get { return m_InputFileName; }
+			set { m_InputFileName = value; }
+		}
+
+		public TextReader InputFile {
 			get { return m_InputFile; }
 			set { m_InputFile = value; }
+		}
+
+		public bool ZeroBase {
+			get { return m_ZeroBase; }
+			set { m_ZeroBase = value; }
 		}
 
 		void GetLine()
@@ -105,15 +116,12 @@ namespace Yacc
 			int st_cptr = m_ColumnNo;
 
 			s = m_ColumnNo + 2;
-			for (; ; )
-			{
-				if (m_Line[s] == '*' && m_Line[s + 1] == '/')
-				{
+			for (;;) {
+				if (m_Line[s] == '*' && m_Line[s + 1] == '/') {
 					m_ColumnNo = s + 2;
 					return;
 				}
-				if (m_Line[s] == '\n')
-				{
+				if (m_Line[s] == '\n') {
 					GetLine();
 					if (m_Line == null)
 						Error.UnterminatedComment(st_lineno, st_line, st_cptr);
@@ -128,58 +136,53 @@ namespace Yacc
 		{
 			int s;
 
-			if (m_Line == null)
-			{
+			if (m_Line == null) {
 				GetLine();
 				if (m_Line == null)
 					return Defs.EOF;
 			}
 
 			s = m_ColumnNo;
-			for (; ; )
-			{
-				switch (m_Line[s])
-				{
-					case '\n':
+			for (;;) {
+				switch (m_Line[s]) {
+				case '\n':
+					GetLine();
+					if (m_Line == null) return Defs.EOF;
+					s = m_ColumnNo;
+					break;
+
+				case ' ':
+				case '\t':
+				case '\f':
+				case '\r':
+				case '\v':
+				case ',':
+				case ';':
+					++s;
+					break;
+
+				case '\\':
+					m_ColumnNo = s;
+					return '%';
+
+				case '/':
+					if (m_Line[s + 1] == '*') {
+						m_ColumnNo = s;
+						SkipComment();
+						s = m_ColumnNo;
+						break;
+					}
+					else if (m_Line[s + 1] == '/') {
 						GetLine();
 						if (m_Line == null) return Defs.EOF;
 						s = m_ColumnNo;
 						break;
+					}
+					goto default;/* fall through */
 
-					case ' ':
-					case '\t':
-					case '\f':
-					case '\r':
-					case '\v':
-					case ',':
-					case ';':
-						++s;
-						break;
-
-					case '\\':
-						m_ColumnNo = s;
-						return '%';
-
-					case '/':
-						if (m_Line[s + 1] == '*')
-						{
-							m_ColumnNo = s;
-							SkipComment();
-							s = m_ColumnNo;
-							break;
-						}
-						else if (m_Line[s + 1] == '/')
-						{
-							GetLine();
-							if (m_Line == null) return Defs.EOF;
-							s = m_ColumnNo;
-							break;
-						}
-						goto default;/* fall through */
-
-					default:
-						m_ColumnNo = s;
-						return m_Line[s];
+				default:
+					m_ColumnNo = s;
+					return m_Line[s];
 				}
 			}
 		}
@@ -190,13 +193,10 @@ namespace Yacc
 			int t_cptr = m_ColumnNo;
 
 			c = m_Line[++m_ColumnNo];
-			if (Char.IsLetter(c))
-			{
+			if (Char.IsLetter(c)) {
 				StringBuilder cache = new StringBuilder();
-				for (; ; )
-				{
-					if (Char.IsLetter(c))
-					{
+				for (;;) {
+					if (Char.IsLetter(c)) {
 						if (Char.IsUpper(c)) c = Char.ToLower(c);
 						cache.Append((char)c);
 					}
@@ -220,8 +220,7 @@ namespace Yacc
 				if (String.Compare(cache.ToString(), "start") == 0)
 					return KeywordCode.START;
 			}
-			else
-			{
+			else {
 				m_ColumnNo++;
 				if (c == '{')
 					return KeywordCode.TEXT;
@@ -250,52 +249,45 @@ namespace Yacc
 			string t_line = DupLine();
 			int t_cptr = m_ColumnNo - 2;
 
-			if (m_Line[m_ColumnNo] == '\n')
-			{
+			if (m_Line[m_ColumnNo] == '\n') {
 				GetLine();
 				if (m_Line == null)
 					Error.UnterminatedText(t_lineno, t_line, t_cptr);
 			}
 			f.Write(m_Output.LineFormat, Error.LineNo, Error.InputFileName);
 
-		loop:
+			loop:
 			c = m_Line[m_ColumnNo++];
-			switch (c)
-			{
-				case '\n':
+			switch (c) {
+			case '\n':
 				next_line:
-					f.Write('\n');
+				f.Write('\n');
 				need_newline = false;
 				GetLine();
 				if (m_Line != null) goto loop;
 				Error.UnterminatedText(t_lineno, t_line, t_cptr);
 				break;
-				case '\'':
-				case '"':
-				{
+			case '\'':
+			case '"': {
 					int s_lineno = Error.LineNo;
 					string s_line = DupLine();
 					int s_cptr = m_ColumnNo - 1;
 
 					quote = c;
 					f.Write((char)c);
-					for (; ; )
-					{
+					for (;;) {
 						c = m_Line[m_ColumnNo++];
 						f.Write((char)c);
-						if (c == quote)
-						{
+						if (c == quote) {
 							need_newline = true;
 							goto loop;
 						}
 						if (c == '\n')
 							Error.UnterminatedString(s_lineno, s_line, s_cptr);
-						if (c == '\\')
-						{
+						if (c == '\\') {
 							c = m_Line[m_ColumnNo++];
 							f.Write((char)c);
-							if (c == '\n')
-							{
+							if (c == '\n') {
 								GetLine();
 								if (m_Line == null)
 									Error.UnterminatedString(s_lineno, s_line, s_cptr);
@@ -304,35 +296,30 @@ namespace Yacc
 					}
 				}
 				break;
-				case '/':
+			case '/':
 				f.Write((char)c);
 				need_newline = true;
 				c = m_Line[m_ColumnNo];
-				if (c == '/')
-				{
+				if (c == '/') {
 					do f.Write((char)c); while ((c = m_Line[++m_ColumnNo]) != '\n');
 					goto next_line;
 				}
-				if (c == '*')
-				{
+				if (c == '*') {
 					int c_lineno = Error.LineNo;
 					string c_line = DupLine();
 					int c_cptr = m_ColumnNo - 1;
 
 					f.Write('*');
 					m_ColumnNo++;
-					for (; ; )
-					{
+					for (;;) {
 						c = m_Line[m_ColumnNo++];
 						f.Write((char)c);
-						if (c == '*' && m_Line[m_ColumnNo] == '/')
-						{
+						if (c == '*' && m_Line[m_ColumnNo] == '/') {
 							f.Write('/');
 							m_ColumnNo++;
 							goto loop;
 						}
-						if (c == '\n')
-						{
+						if (c == '\n') {
 							GetLine();
 							if (m_Line == null)
 								Error.UnterminatedComment(c_lineno, c_line, c_cptr);
@@ -342,17 +329,16 @@ namespace Yacc
 				need_newline = true;
 				goto loop;
 
-				case '%':
-				case '\\':
-				if (m_Line[m_ColumnNo] == '}')
-				{
+			case '%':
+			case '\\':
+				if (m_Line[m_ColumnNo] == '}') {
 					if (need_newline) f.Write('\n');
 					m_ColumnNo++;
 					return;
 				}
-				goto default;	/* fall through */
+				goto default;   /* fall through */
 
-				default:
+			default:
 				f.Write((char)c);
 				need_newline = true;
 				goto loop;
@@ -382,71 +368,65 @@ namespace Yacc
 
 			quote = m_Line[m_ColumnNo++];
 			StringBuilder cache = new StringBuilder();
-			for (; ; )
-			{
+			for (;;) {
 				c = m_Line[m_ColumnNo++];
 				if (c == quote) break;
 				if (c == '\n') Error.UnterminatedString(s_lineno, s_line, s_cptr);
-				if (c == '\\')
-				{
+				if (c == '\\') {
 					int c_cptr = m_ColumnNo - 1;
 
 					c = m_Line[m_ColumnNo++];
-					switch (c)
-					{
-						case '\n':
-							GetLine();
-							if (m_Line == null) Error.UnterminatedString(s_lineno, s_line, s_cptr);
-							continue;
+					switch (c) {
+					case '\n':
+						GetLine();
+						if (m_Line == null) Error.UnterminatedString(s_lineno, s_line, s_cptr);
+						continue;
 
-						case '0':
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-							n = c - '0';
-							c = m_Line[m_ColumnNo];
-							if (IsOctal(c))
-							{
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+						n = c - '0';
+						c = m_Line[m_ColumnNo];
+						if (IsOctal(c)) {
+							n = (n << 3) + (c - '0');
+							c = m_Line[++m_ColumnNo];
+							if (IsOctal(c)) {
 								n = (n << 3) + (c - '0');
-								c = m_Line[++m_ColumnNo];
-								if (IsOctal(c))
-								{
-									n = (n << 3) + (c - '0');
-									m_ColumnNo++;
-								}
-							}
-							if (n > Defs.MAXCHAR) Error.IllegalCharacter(m_Line, c_cptr);
-							c = (char)n;
-							break;
-
-						case 'x':
-							c = m_Line[m_ColumnNo++];
-							n = HexVal(c);
-							if (n < 0 || n >= 16)
-								Error.IllegalCharacter(m_Line, c_cptr);
-							for (; ; )
-							{
-								c = m_Line[m_ColumnNo];
-								i = HexVal(c);
-								if (i < 0 || i >= 16) break;
 								m_ColumnNo++;
-								n = (n << 4) + i;
-								if (n > Defs.MAXCHAR) Error.IllegalCharacter(m_Line, c_cptr);
 							}
-							c = (char)n;
-							break;
+						}
+						if (n > Defs.MAXCHAR) Error.IllegalCharacter(m_Line, c_cptr);
+						c = (char)n;
+						break;
 
-						case 'a': c = '\x7'; break;
-						case 'b': c = '\b'; break;
-						case 'f': c = '\f'; break;
-						case 'n': c = '\n'; break;
-						case 'r': c = '\r'; break;
-						case 't': c = '\t'; break;
-						case 'v': c = '\v'; break;
+					case 'x':
+						c = m_Line[m_ColumnNo++];
+						n = HexVal(c);
+						if (n < 0 || n >= 16)
+							Error.IllegalCharacter(m_Line, c_cptr);
+						for (;;) {
+							c = m_Line[m_ColumnNo];
+							i = HexVal(c);
+							if (i < 0 || i >= 16) break;
+							m_ColumnNo++;
+							n = (n << 4) + i;
+							if (n > Defs.MAXCHAR) Error.IllegalCharacter(m_Line, c_cptr);
+						}
+						c = (char)n;
+						break;
+
+					case 'a': c = '\x7'; break;
+					case 'b': c = '\b'; break;
+					case 'f': c = '\f'; break;
+					case 'n': c = '\n'; break;
+					case 'r': c = '\r'; break;
+					case 't': c = '\t'; break;
+					case 'v': c = '\v'; break;
 					}
 				}
 				cache.Append((char)c);
@@ -480,7 +460,10 @@ namespace Yacc
 			for (c = m_Line[m_ColumnNo]; Char.IsDigit(c); c = m_Line[++m_ColumnNo])
 				n = 10 * n + (c - '0');
 
-			return n;
+			if (m_ZeroBase)
+				return n + 1;
+			else
+				return n;
 		}
 
 		/** ats:
@@ -499,9 +482,8 @@ namespace Yacc
 			m_ColumnNo++;
 			c = Nextc();
 			if (c == Defs.EOF) Error.UnexpectedEOF();
-			if (emptyOk && c == '>')
-			{
-				m_ColumnNo++; return null;	// 0 indicates empty tag if emptyOk
+			if (emptyOk && c == '>') {
+				m_ColumnNo++; return null;  // 0 indicates empty tag if emptyOk
 			}
 			if (!Char.IsLetter((char)c) && c != '_' && c != '$') // << or <. are not allowed
 				Error.IllegalTag(t_lineno, t_line, t_cptr);
@@ -511,27 +493,25 @@ namespace Yacc
 			/** ats: was
 			do { cachec(c); c = line[++cptr]; } while (Defs.IS_IDENT(c)); */
 
-			for (i = 0; ; )
-			{ // count <> nests
+			for (i = 0; ;) { // count <> nests
 				cache.Append((char)c);
-				switch (c = m_Line[++m_ColumnNo])
-				{
-					case '<': // nest
-						++i;
-						continue;
-					case '>': // unnest or exit loop
-						if (--i < 0) break;
-						continue;
-					case ' ':
-					case '?':
-					case '[':
-					case ']':
-					case ',': // extra characters for generics
-						if (i == 0) break; // but not at outer level
-						continue;
-					default: // alnum and . _ $ are ok.
-						if (!IsIdent(c)) break;
-						continue;
+				switch (c = m_Line[++m_ColumnNo]) {
+				case '<': // nest
+					++i;
+					continue;
+				case '>': // unnest or exit loop
+					if (--i < 0) break;
+					continue;
+				case ' ':
+				case '?':
+				case '[':
+				case ']':
+				case ',': // extra characters for generics
+					if (i == 0) break; // but not at outer level
+					continue;
+				default: // alnum and . _ $ are ok.
+					if (!IsIdent(c)) break;
+					continue;
 				}
 				break;
 			}
@@ -542,8 +522,7 @@ namespace Yacc
 				Error.IllegalTag(t_lineno, t_line, t_cptr);
 			m_ColumnNo++;
 
-			for (i = 0; i < m_TagTable.Count; ++i)
-			{
+			for (i = 0; i < m_TagTable.Count; ++i) {
 				if (String.Compare(cache.ToString(), m_TagTable[i]) == 0)
 					return m_TagTable[i];
 			}
@@ -564,15 +543,13 @@ namespace Yacc
 
 			c = Nextc();
 			if (c == Defs.EOF) Error.UnexpectedEOF();
-			if (c == '<')
-			{
+			if (c == '<') {
 				tag = GetTag(false);
 				c = Nextc();
 				if (c == Defs.EOF) Error.UnexpectedEOF();
 			}
 
-			for (; ; )
-			{
+			for (;;) {
 				if (Char.IsLetter((char)c) || c == '_' || c == '.' || c == '$')
 					bp = GetName();
 				else if (c == '\'' || c == '"')
@@ -583,8 +560,7 @@ namespace Yacc
 				c = Nextc();
 				if (c == Defs.EOF) Error.UnexpectedEOF();
 				value = bp.Value;
-				if (Char.IsDigit((char)c))
-				{
+				if (Char.IsDigit((char)c)) {
 					value = GetNumber();
 					c = Nextc();
 					if (c == Defs.EOF) Error.UnexpectedEOF();
@@ -609,8 +585,7 @@ namespace Yacc
 			if (c != '<') Error.SyntaxError(Error.LineNo, m_Line, m_ColumnNo);
 			tag = GetTag(false);
 
-			for (; ; )
-			{
+			for (;;) {
 				c = Nextc();
 				if (Char.IsLetter((char)c) || c == '_' || c == '.' || c == '$')
 					bp = GetName();
@@ -645,34 +620,32 @@ namespace Yacc
 
 			StringBuilder cache = new StringBuilder();
 
-			for (; ; )
-			{
+			for (;;) {
 				c = Nextc();
 				if (c == Defs.EOF) Error.UnexpectedEOF();
 				if (c != '%') Error.SyntaxError(Error.LineNo, m_Line, m_ColumnNo);
-				switch (k = Keyword())
-				{
-					case KeywordCode.MARK:
-						return;
+				switch (k = Keyword()) {
+				case KeywordCode.MARK:
+					return;
 
-					case KeywordCode.TEXT:
-						CopyText(m_Output.PrologWriter);
-						break;
+				case KeywordCode.TEXT:
+					CopyText(m_Output.PrologWriter);
+					break;
 
-					case KeywordCode.TOKEN:
-					case KeywordCode.LEFT:
-					case KeywordCode.RIGHT:
-					case KeywordCode.NONASSOC:
-						DeclareTokens(k);
-						break;
+				case KeywordCode.TOKEN:
+				case KeywordCode.LEFT:
+				case KeywordCode.RIGHT:
+				case KeywordCode.NONASSOC:
+					DeclareTokens(k);
+					break;
 
-					case KeywordCode.TYPE:
-						DeclareTypes();
-						break;
+				case KeywordCode.TYPE:
+					DeclareTypes();
+					break;
 
-					case KeywordCode.START:
-						DeclareStart();
-						break;
+				case KeywordCode.START:
+					DeclareStart();
+					break;
 				}
 			}
 		}
@@ -684,28 +657,26 @@ namespace Yacc
 			int s_cptr;
 			int s_lineno;
 
-			for (; ; )
-			{
+			for (;;) {
 				c = Nextc();
 				if (c != '%') break;
 				s_cptr = m_ColumnNo;
-				switch (Keyword())
-				{
-					case KeywordCode.MARK:
-						Error.NoGrammar();
-						break;
+				switch (Keyword()) {
+				case KeywordCode.MARK:
+					Error.NoGrammar();
+					break;
 
-					case KeywordCode.TEXT:
-						CopyText(m_Output.LocalWriter);
-						break;
+				case KeywordCode.TEXT:
+					CopyText(m_Output.LocalWriter);
+					break;
 
-					case KeywordCode.START:
-						DeclareStart();
-						break;
+				case KeywordCode.START:
+					DeclareStart();
+					break;
 
-					default:
-						Error.SyntaxError(Error.LineNo, m_Line, s_cptr);
-						break;
+				default:
+					Error.SyntaxError(Error.LineNo, m_Line, s_cptr);
+					break;
 				}
 			}
 
@@ -736,8 +707,7 @@ namespace Yacc
 				bp = GetName();
 
 			c = Nextc();
-			if (c == ':')
-			{
+			if (c == ':') {
 				m_CurrentRule.EndRule();
 				m_CurrentRule = DeclareRule(bp);
 				m_ColumnNo++;
@@ -760,7 +730,7 @@ namespace Yacc
 
 			StringBuilder f = new StringBuilder();
 #if !OUTPUT_CODE
-			f.AppendFormat("case {0}:\n", Yacc.m_Rules.Count - 2);
+			f.AppendFormat("case {0}:\n", Yacc.m_Rules.Count - (m_CurrentRule.LastWasAction ? 1 : 2));
 			f.AppendFormat(m_Output.LineFormat, Error.LineNo, Error.InputFileName);
 #endif
 			f.Append(' '); f.Append(' ');
@@ -770,12 +740,10 @@ namespace Yacc
 			for (i = Items.Count - 1; Items[i] != null; --i) ++n;
 
 			depth = 0;
-		loop:
+			loop:
 			c = m_Line[m_ColumnNo];
-			if (c == '$')
-			{
-				if (m_Line[m_ColumnNo + 1] == '<')
-				{
+			if (c == '$') {
+				if (m_Line[m_ColumnNo + 1] == '<') {
 					int d_lineno = Error.LineNo;
 					string d_line = DupLine();
 					int d_cptr = m_ColumnNo;
@@ -783,8 +751,7 @@ namespace Yacc
 					m_ColumnNo++;
 					tag = GetTag(true);
 					c = m_Line[m_ColumnNo];
-					if (c == '$')
-					{
+					if (c == '$') {
 						if (tag != null && String.Compare(tag, "Object") != 0)
 #if !OUTPUT_CODE
 							f.AppendFormat("(({0})yyVal)", tag);
@@ -796,8 +763,7 @@ namespace Yacc
 						m_ColumnNo++;
 						goto loop;
 					}
-					else if (Char.IsDigit((char)c))
-					{
+					else if (Char.IsDigit((char)c)) {
 						i = GetNumber();
 						if (i > n) Error.DollarWarning(d_lineno, i);
 						if (tag != null && String.Compare(tag, "Object") != 0)
@@ -810,8 +776,7 @@ namespace Yacc
 #endif
 						goto loop;
 					}
-					else if (c == '-' && Char.IsDigit(m_Line[m_ColumnNo + 1]))
-					{
+					else if (c == '-' && Char.IsDigit(m_Line[m_ColumnNo + 1])) {
 						m_ColumnNo++;
 #if !OUTPUT_CODE
 						i = -GetNumber() - n;
@@ -829,8 +794,7 @@ namespace Yacc
 					else
 						Error.DollarError(d_lineno, d_line, d_cptr);
 				}
-				else if (m_Line[m_ColumnNo + 1] == '$')
-				{
+				else if (m_Line[m_ColumnNo + 1] == '$') {
 					if (m_TagTable.Count != 0 && m_CurrentRule.Rule.Lhs.Tag == null)
 						Error.UntypedLhs();
 #if !OUTPUT_CODE
@@ -841,17 +805,14 @@ namespace Yacc
 					m_ColumnNo += 2;
 					goto loop;
 				}
-				else if (Char.IsDigit(m_Line[m_ColumnNo + 1]))
-				{
+				else if (Char.IsDigit(m_Line[m_ColumnNo + 1])) {
 					m_ColumnNo++;
 					i = GetNumber();
-					if (m_TagTable.Count != 0)
-					{
+					if (m_TagTable.Count != 0) {
 						if (i <= 0 || i > n)
 							Error.UnknownRhs(i);
 						tag = Items[Items.Count + i - n - 1].Tag;
-						if (tag == null)
-						{
+						if (tag == null) {
 							Error.UntypedRhs(i, Items[Items.Count + i - n - 1].Name);
 #if !OUTPUT_CODE
 							f.AppendFormat("yyVals[{0}+yyTop]", i - n);
@@ -872,8 +833,7 @@ namespace Yacc
 							f.AppendFormat("vals[{0}]", i - 1/* - n*/);
 #endif
 					}
-					else
-					{
+					else {
 						if (i > n)
 							Error.DollarWarning(Error.LineNo, i);
 #if !OUTPUT_CODE
@@ -884,8 +844,7 @@ namespace Yacc
 					}
 					goto loop;
 				}
-				else if (m_Line[m_ColumnNo + 1] == '-')
-				{
+				else if (m_Line[m_ColumnNo + 1] == '-') {
 					m_ColumnNo += 2;
 					i = GetNumber();
 					if (m_TagTable.Count != 0)
@@ -898,10 +857,8 @@ namespace Yacc
 					goto loop;
 				}
 			}
-			if (Char.IsLetter((char)c) || c == '_' || c == '$')
-			{
-				do
-				{
+			if (Char.IsLetter((char)c) || c == '_' || c == '$') {
+				do {
 					f.Append((char)c);
 					c = m_Line[++m_ColumnNo];
 				} while (Char.IsLetterOrDigit((char)c) || c == '_' || c == '$');
@@ -909,57 +866,51 @@ namespace Yacc
 			}
 			f.Append((char)c);
 			m_ColumnNo++;
-			switch (c)
-			{
-				case '\n':
+			switch (c) {
+			case '\n':
 				next_line:
-					GetLine();
+				GetLine();
 				if (m_Line != null) goto loop;
 				Error.UnterminatedAction(a_lineno, a_line, a_cptr);
 				break;
 
-				case ';':
+			case ';':
 				if (depth > 0) goto loop;
 #if !OUTPUT_CODE
 				f.Append("\nbreak;\n");
 #endif
 				goto epilog;
 
-				case '{':
+			case '{':
 				++depth;
 				goto loop;
 
-				case '}':
+			case '}':
 				if (--depth > 0) goto loop;
 #if !OUTPUT_CODE
 				f.Append("\n  break;\n");
 #endif
 				goto epilog;
 
-				case '\'':
-				case '"':
-				{
+			case '\'':
+			case '"': {
 					int s_lineno = Error.LineNo;
 					string s_line = DupLine();
 					int s_cptr = m_ColumnNo - 1;
 
 					quote = c;
-					for (; ; )
-					{
+					for (;;) {
 						c = m_Line[m_ColumnNo++];
 						f.Append((char)c);
-						if (c == quote)
-						{
+						if (c == quote) {
 							goto loop;
 						}
 						if (c == '\n')
 							Error.UnterminatedString(s_lineno, s_line, s_cptr);
-						if (c == '\\')
-						{
+						if (c == '\\') {
 							c = m_Line[m_ColumnNo++];
 							f.Append((char)c);
-							if (c == '\n')
-							{
+							if (c == '\n') {
 								GetLine();
 								if (m_Line == null)
 									Error.UnterminatedString(s_lineno, s_line, s_cptr);
@@ -968,13 +919,11 @@ namespace Yacc
 					}
 				}
 
-				case '/':
+			case '/':
 				c = m_Line[m_ColumnNo];
-				if (c == '/')
-				{
+				if (c == '/') {
 					f.Append('*');
-					while ((c = m_Line[++m_ColumnNo]) != '\n')
-					{
+					while ((c = m_Line[++m_ColumnNo]) != '\n') {
 						if (c == '*' && m_Line[m_ColumnNo + 1] == '/')
 							f.Append("* ");
 						else
@@ -983,26 +932,22 @@ namespace Yacc
 					f.Append("*/\n");
 					goto next_line;
 				}
-				if (c == '*')
-				{
+				if (c == '*') {
 					int c_lineno = Error.LineNo;
 					string c_line = DupLine();
 					int c_cptr = m_ColumnNo - 1;
 
 					f.Append('*');
 					m_ColumnNo++;
-					for (; ; )
-					{
+					for (;;) {
 						c = m_Line[m_ColumnNo++];
 						f.Append((char)c);
-						if (c == '*' && m_Line[m_ColumnNo] == '/')
-						{
+						if (c == '*' && m_Line[m_ColumnNo] == '/') {
 							f.Append('/');
 							m_ColumnNo++;
 							goto loop;
 						}
-						if (c == '\n')
-						{
+						if (c == '\n') {
 							GetLine();
 							if (m_Line == null)
 								Error.UnterminatedComment(c_lineno, c_line, c_cptr);
@@ -1011,11 +956,11 @@ namespace Yacc
 				}
 				goto loop;
 
-				default:
+			default:
 				goto loop;
 			}
 
-		epilog:
+			epilog:
 			m_CurrentRule.AddAction(f.ToString());
 		}
 
@@ -1025,8 +970,7 @@ namespace Yacc
 			Symbol bp;
 
 			c = m_Line[m_ColumnNo + 1];
-			if (c == '%' || c == '\\')
-			{
+			if (c == '%' || c == '\\') {
 				m_ColumnNo += 2;
 				return true;
 			}
@@ -1036,8 +980,7 @@ namespace Yacc
 			else if ((c == 'p' || c == 'P') &&
 				 ((c = m_Line[m_ColumnNo + 2]) == 'r' || c == 'R') &&
 				 ((c = m_Line[m_ColumnNo + 3]) == 'e' || c == 'E') &&
-				 ((c = m_Line[m_ColumnNo + 4]) == 'c' || c == 'C'))
-			{
+				 ((c = m_Line[m_ColumnNo + 4]) == 'c' || c == 'C')) {
 				if (!IsIdent(c = m_Line[m_ColumnNo + 5]))
 					m_ColumnNo += 5;
 			}
@@ -1049,8 +992,7 @@ namespace Yacc
 				bp = GetName();
 			else if (c == '\'' || c == '"')
 				bp = GetLiteral();
-			else
-			{
+			else {
 				Error.SyntaxError(Error.LineNo, m_Line, m_ColumnNo);
 				/*NOTREACHED*/
 				bp = null;
@@ -1067,8 +1009,7 @@ namespace Yacc
 
 			AdvanceToStart();
 
-			for (; ; )
-			{
+			for (;;) {
 				c = Nextc();
 				if (c == Defs.EOF) break;
 				if (Char.IsLetter((char)c) || c == '_' || c == '.' || c == '$' || c == '\'' ||
@@ -1076,14 +1017,12 @@ namespace Yacc
 					AddSymbol();
 				else if (c == '{' || c == '=')
 					CopyAction();
-				else if (c == '|')
-				{
+				else if (c == '|') {
 					m_CurrentRule.EndRule();
 					m_CurrentRule.StartRule();
 					m_ColumnNo++;
 				}
-				else if (c == '%')
-				{
+				else if (c == '%') {
 					if (MarkSymbol()) break;
 				}
 				else
@@ -1104,8 +1043,7 @@ namespace Yacc
 
 			In = m_InputFile;
 			c = m_Line[m_ColumnNo];
-			if (c == '\n')
-			{
+			if (c == '\n') {
 				++Error.LineNo;
 				if ((c = In.Read()) == Defs.EOF)
 					return;
@@ -1113,22 +1051,19 @@ namespace Yacc
 				f.Write((char)c);
 				last = c;
 			}
-			else
-			{
+			else {
 				f.Write(m_Output.LineFormat, Error.LineNo, Error.InputFileName);
 				do { f.Write((char)c); } while ((c = m_Line[++m_ColumnNo]) != '\n');
 				f.Write("\n      ");
 				last = '\n';
 			}
 
-			while ((c = In.Read()) != Defs.EOF)
-			{
+			while ((c = In.Read()) != Defs.EOF) {
 				f.Write((char)c);
 				last = c;
 			}
 
-			if (last != '\n')
-			{
+			if (last != '\n') {
 				f.Write("\n      ");
 			}
 		}

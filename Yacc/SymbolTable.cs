@@ -41,7 +41,7 @@ namespace Yacc
 {
 	class SymbolTable : ICollection<Symbol>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #endif // not lint
 
@@ -64,8 +64,7 @@ namespace Yacc
 		{
 			Symbol bp;
 
-			if (m_SymbolTable.TryGetValue(name, out bp))
-			{
+			if (m_SymbolTable.TryGetValue(name, out bp)) {
 				return bp;
 			}
 
@@ -103,13 +102,11 @@ namespace Yacc
 			m_SymbolTable.Values.CopyTo(array, arrayIndex);
 		}
 
-		public int Count
-		{
+		public int Count {
 			get { return m_SymbolTable.Count; }
 		}
 
-		public bool IsReadOnly
-		{
+		public bool IsReadOnly {
 			get { return true; }
 		}
 

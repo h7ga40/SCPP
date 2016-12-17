@@ -43,7 +43,7 @@ namespace Yacc
 {
 	public class Error
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #endif // not lint
 
@@ -56,26 +56,22 @@ namespace Yacc
 		{
 		}
 
-		public string MyName
-		{
+		public string MyName {
 			get { return m_MyName; }
 			set { m_MyName = value; }
 		}
 
-		public string InputFileName
-		{
+		public string InputFileName {
 			get { return m_InputFileName; }
 			set { m_InputFileName = value; }
 		}
 
-		public int LineNo
-		{
+		public int LineNo {
 			get { return m_LineNo; }
 			set { m_LineNo = value; }
 		}
 
-		public YaccErrors Errors
-		{
+		public YaccErrors Errors {
 			get { return m_Errors; }
 		}
 
@@ -102,16 +98,14 @@ namespace Yacc
 			int s;
 
 			if (st_line == null) return "";
-			for (s = 0; st_line[s] != '\n'; ++s)
-			{
+			for (s = 0; st_line[s] != '\n'; ++s) {
 				if (IsPrint(st_line[s]) || st_line[s] == '\t')
 					result.Append(st_line[s]);
 				else
 					result.Append('?');
 			}
 			result.Append('\n');
-			for (s = 0; s < st_cptr; ++s)
-			{
+			for (s = 0; s < st_cptr; ++s) {
 				if (st_line[s] == '\t')
 					result.Append('\t');
 				else

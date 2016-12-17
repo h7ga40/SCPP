@@ -37,20 +37,19 @@ namespace Yacc
 
 		public void shift(int from, int to, int errorFlag)
 		{
-			switch (errorFlag)
-			{
-				default:				// normally
-					Out.WriteLine("shift\tfrom state " + from + " to " + to);
-					break;
-				case 0:
-				case 1:
-				case 2:		// in error recovery
-					Out.WriteLine("shift\tfrom state " + from + " to " + to
-							 + "\t" + errorFlag + " left to recover");
-					break;
-				case 3:				// normally
-					Out.WriteLine("shift\tfrom state " + from + " to " + to + "\ton error");
-					break;
+			switch (errorFlag) {
+			default:                // normally
+				Out.WriteLine("shift\tfrom state " + from + " to " + to);
+				break;
+			case 0:
+			case 1:
+			case 2:     // in error recovery
+				Out.WriteLine("shift\tfrom state " + from + " to " + to
+						 + "\t" + errorFlag + " left to recover");
+				break;
+			case 3:             // normally
+				Out.WriteLine("shift\tfrom state " + from + " to " + to + "\ton error");
+				break;
 			}
 		}
 

@@ -138,16 +138,14 @@ namespace Yacc
 			if ((n = m_Sindex[state]) != 0)
 				for (token = n < 0 ? -n : 0;
 					 (token < m_Names.Count) && (n + token < m_Table.Count); ++token)
-					if (m_Check[n + token] == token && !ok[token] && m_Names[token] != null)
-					{
+					if (m_Check[n + token] == token && !ok[token] && m_Names[token] != null) {
 						++len;
 						ok[token] = true;
 					}
 			if ((n = m_Rindex[state]) != 0)
 				for (token = n < 0 ? -n : 0;
 					 (token < m_Names.Count) && (n + token < m_Table.Count); ++token)
-					if (m_Check[n + token] == token && !ok[token] && m_Names[token] != null)
-					{
+					if (m_Check[n + token] == token && !ok[token] && m_Names[token] != null) {
 						++len;
 						ok[token] = true;
 					}
@@ -192,8 +190,8 @@ namespace Yacc
 			return first;
 		}
 
-		protected int m_Token;					// current input
-		protected int m_ErrorFlag;				// #tokens to shift
+		protected int m_Token;                  // current input
+		protected int m_ErrorFlag;              // #tokens to shift
 		private ValueList m_Values = new ValueList();
 
 		/// <summary>
@@ -205,18 +203,17 @@ namespace Yacc
 		/// <exceptions><c>yyException</c> on irrecoverable parse error</exceptions>
 		public virtual ParserValue Parse(Input lex)
 		{
-			int state = 0;											// state stack ptr
-			List<int> states = new List<int>();					// state stack 
-			ParserValue value = default(ParserValue);				// value stack ptr
-			List<ParserValue> values = m_Values.Values;				// value stack
+			int state = 0;                                          // state stack ptr
+			List<int> states = new List<int>();                 // state stack 
+			ParserValue value = default(ParserValue);               // value stack ptr
+			List<ParserValue> values = m_Values.Values;             // value stack
 			ActionEventHandler<ParserValue> action;
-			m_Token = -1;											// current input
-			m_ErrorFlag = 0;										// #tokens to shift
+			m_Token = -1;                                           // current input
+			m_ErrorFlag = 0;                                        // #tokens to shift
 
 			for (int top = 0; ; top++) /*yyLoop*/
 			{
-				while (top >= states.Count)
-				{
+				while (top >= states.Count) {
 					states.Add(0);
 					values.Add(default(ParserValue));
 				}
@@ -224,23 +221,19 @@ namespace Yacc
 				values[top] = value;
 				if (m_Debug != null) m_Debug.push(state, value);
 
-				for (; ; )
-				{	// discarding a token does not change stack
+				for (;;) {  // discarding a token does not change stack
 					int n;
-					if ((n = m_DefRed[state]) == 0)
-					{	// else [default] reduce (yyN)
-						if (m_Token < 0)
-						{
+					if ((n = m_DefRed[state]) == 0) {   // else [default] reduce (yyN)
+						if (m_Token < 0) {
 							m_Token = lex.Advance() ? lex.Token.Value : 0;
 							if (m_Debug != null)
 								m_Debug.lex(state, m_Token, TokenToName(m_Token), lex.Value);
 						}
 						if ((n = m_Sindex[state]) != 0 && ((n += m_Token) >= 0)
-							&& (n < m_Table.Count) && (m_Check[n] == m_Token))
-						{
+							&& (n < m_Table.Count) && (m_Check[n] == m_Token)) {
 							if (m_Debug != null)
 								m_Debug.shift(state, m_Table[n], m_ErrorFlag > 0 ? m_ErrorFlag - 1 : 0);
-							state = m_Table[n];		// shift to yyN
+							state = m_Table[n];     // shift to yyN
 							value = lex.Value;
 							m_Token = -1;
 							if (m_ErrorFlag > 0) --m_ErrorFlag;
@@ -248,46 +241,42 @@ namespace Yacc
 						}
 						if ((n = m_Rindex[state]) != 0 && (n += m_Token) >= 0
 							&& n < m_Table.Count && m_Check[n] == m_Token)
-							n = m_Table[n];			// reduce (yyN)
+							n = m_Table[n];         // reduce (yyN)
 						else
-							switch (m_ErrorFlag)
-							{
+							switch (m_ErrorFlag) {
 
-								case 0:
-									Error("syntax error", Expecting(state));
-									if (m_Debug != null) m_Debug.error("syntax error");
-									goto case 1;
-								case 1:
-								case 2:
-									m_ErrorFlag = 3;
-									do
-									{
-										if ((n = m_Sindex[states[top]]) != 0
-											&& (n += ErrorCode) >= 0 && n < m_Table.Count
-											&& m_Check[n] == ErrorCode)
-										{
-											if (m_Debug != null)
-												m_Debug.shift(states[top], m_Table[n], 3);
-											state = m_Table[n];
-											value = lex.Value;
-											goto continue_yyLoop;
-										}
-										if (m_Debug != null) m_Debug.pop(states[top]);
-									} while (--top >= 0);
-									if (m_Debug != null) m_Debug.reject();
-									throw new YaccException("irrecoverable syntax error");
-
-								case 3:
-									if (m_Token == 0)
-									{
-										if (m_Debug != null) m_Debug.reject();
-										throw new YaccException("irrecoverable syntax error at end-of-file");
+							case 0:
+								Error("syntax error", Expecting(state));
+								if (m_Debug != null) m_Debug.error("syntax error");
+								goto case 1;
+							case 1:
+							case 2:
+								m_ErrorFlag = 3;
+								do {
+									if ((n = m_Sindex[states[top]]) != 0
+										&& (n += ErrorCode) >= 0 && n < m_Table.Count
+										&& m_Check[n] == ErrorCode) {
+										if (m_Debug != null)
+											m_Debug.shift(states[top], m_Table[n], 3);
+										state = m_Table[n];
+										value = lex.Value;
+										goto continue_yyLoop;
 									}
-									if (m_Debug != null)
-										m_Debug.discard(state, m_Token, TokenToName(m_Token),
-													lex.Value);
-									m_Token = -1;
-									goto continue_yyDiscarded;		// leave stack alone
+									if (m_Debug != null) m_Debug.pop(states[top]);
+								} while (--top >= 0);
+								if (m_Debug != null) m_Debug.reject();
+								throw new YaccException("irrecoverable syntax error");
+
+							case 3:
+								if (m_Token == 0) {
+									if (m_Debug != null) m_Debug.reject();
+									throw new YaccException("irrecoverable syntax error at end-of-file");
+								}
+								if (m_Debug != null)
+									m_Debug.discard(state, m_Token, TokenToName(m_Token),
+												lex.Value);
+								m_Token = -1;
+								goto continue_yyDiscarded;      // leave stack alone
 							}
 					}
 					int v = top + 1 - m_Len[n];
@@ -303,18 +292,15 @@ namespace Yacc
 					top -= m_Len[n];
 					state = states[top];
 					int m = m_Lhs[n];
-					if (state == 0 && m == 0)
-					{
+					if (state == 0 && m == 0) {
 						if (m_Debug != null) m_Debug.shift(0, m_Final);
 						state = m_Final;
-						if (m_Token < 0)
-						{
+						if (m_Token < 0) {
 							m_Token = lex.Advance() ? lex.Token.Value : 0;
 							if (m_Debug != null)
 								m_Debug.lex(state, m_Token, TokenToName(m_Token), lex.Value);
 						}
-						if (m_Token == 0)
-						{
+						if (m_Token == 0) {
 							if (m_Debug != null) m_Debug.accept(value);
 							return value;
 						}
@@ -327,10 +313,10 @@ namespace Yacc
 						state = m_Dgoto[m];
 					if (m_Debug != null) m_Debug.shift(states[top], state);
 					goto continue_yyLoop;
-				continue_yyDiscarded:
+					continue_yyDiscarded:
 					continue;
 				}
-			continue_yyLoop:
+				continue_yyLoop:
 				continue;
 			}
 		}
@@ -538,13 +524,11 @@ namespace Yacc
 				m_Offset = 0;
 			}
 
-			public List<ParserValue> Values
-			{
+			public List<ParserValue> Values {
 				get { return m_Values; }
 			}
 
-			public int Offset
-			{
+			public int Offset {
 				get { return m_Offset; }
 				set { m_Offset = value; }
 			}
@@ -566,8 +550,7 @@ namespace Yacc
 				m_Values.RemoveAt(index + m_Offset);
 			}
 
-			public ParserValue this[int index]
-			{
+			public ParserValue this[int index] {
 				get { return m_Values[index + m_Offset]; }
 				set { m_Values[index + m_Offset] = value; }
 			}
@@ -596,13 +579,11 @@ namespace Yacc
 				m_Values.CopyTo(m_Offset, array, arrayIndex, m_Values.Count - m_Offset);
 			}
 
-			public int Count
-			{
+			public int Count {
 				get { return m_Values.Count; }
 			}
 
-			public bool IsReadOnly
-			{
+			public bool IsReadOnly {
 				get { return false; }
 			}
 

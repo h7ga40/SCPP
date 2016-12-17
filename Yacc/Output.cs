@@ -43,7 +43,7 @@ namespace Yacc
 {
 	public class Output
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #endif // not lint
 		private TextWriter m_Out;
@@ -52,15 +52,18 @@ namespace Yacc
 
 		private int m_Outline;
 
-		private Stream m_PrologStream;	/*  temp files, used to save text until all	    */
+		private Stream m_PrologStream;  /*  temp files, used to save text until all	    */
 		internal TextWriter PrologWriter;
-		private Stream m_LocalStream;	/*  symbols have been defined			    */
+		private Stream m_LocalStream;   /*  symbols have been defined			    */
 		internal TextWriter LocalWriter;
 		private Stream m_EpilogStream;
 		internal TextWriter EpilogWriter;
 
+		public TextWriter VerboseWriter;
+
 		private Yacc<string> m_Yacc;
 		private Error m_Error;
+		private string token_enum = "Token";
 
 		private ReadOnlyCollection<short> m_Lhs;
 		private ReadOnlyCollection<short> m_Len;
@@ -97,20 +100,17 @@ namespace Yacc
 			m_Rule = yacc.m_Rule.AsReadOnly();
 		}
 
-		public TextWriter Out
-		{
+		public TextWriter Out {
 			get { return m_Out; }
 			set { m_Out = value; }
 		}
 
-		public TextReader TemplateReader
-		{
+		public TextReader TemplateReader {
 			get { return m_TemplateReader; }
 			set { m_TemplateReader = value; }
 		}
 
-		public string LineFormat
-		{
+		public string LineFormat {
 			get { return m_LineFormat; }
 			set { m_LineFormat = value; }
 		}
@@ -120,48 +120,46 @@ namespace Yacc
 			int lno = 0;
 			string buf;
 
-			while ((buf = m_TemplateReader.ReadLine()) != null)
-			{
+			while ((buf = m_TemplateReader.ReadLine()) != null) {
 				string cp;
 				++lno;
 				if (buf.Length == 0)
 					continue;
-				switch (buf[0])
-				{
-					case '#': continue;
-					case 't': if (!m_Yacc.tFlag) m_Out.Write("//t"); break;
-					case '.': break;
-					default:
-						cp = strtok(buf, ' ', '\t', '\r', '\n');
-						if (cp != null)
-						{
-							string prefix = strtok(null, '\r', '\n');
-							if (prefix == null) prefix = "";
+				switch (buf[0]) {
+				case '#': continue;
+				case 't': if (!m_Yacc.tFlag) m_Out.Write("//t"); break;
+				case '.': break;
+				default:
+					cp = strtok(buf, ' ', '\t', '\r', '\n');
+					if (cp != null) {
+						string prefix = strtok(null, '\r', '\n');
+						if (prefix == null) prefix = "";
 
-							if (String.Compare(cp, "actions") == 0) OutputSemanticActions();
-							else if (String.Compare(cp, "epilog") == 0) OutputStoredText(EpilogWriter, m_EpilogStream);
-							else if (String.Compare(cp, "local") == 0) OutputStoredText(LocalWriter, m_LocalStream);
-							else if (String.Compare(cp, "prolog") == 0) OutputStoredText(PrologWriter, m_PrologStream);
-							else if (String.Compare(cp, "tokens") == 0) OutputDefines(prefix);
-							else if (String.Compare(cp, "version") == 0) OutputVersion(prefix);
-							else if (String.Compare(cp, "yyCheck") == 0) OutputShortArray("yyCheck", prefix, m_Check);
-							else if (String.Compare(cp, "yyDefRed") == 0) OutputShortArray("yyDefRed", prefix, m_DefRed);
-							else if (String.Compare(cp, "yyDgoto") == 0) OutputShortArray("yyDgoto", prefix, m_Dgoto);
-							else if (String.Compare(cp, "yyFinal") == 0) OutputFinal(prefix);
-							else if (String.Compare(cp, "yyGindex") == 0) OutputShortArray("yyGindex", prefix, m_Gindex);
-							else if (String.Compare(cp, "yyLen") == 0) OutputShortArray("yyLen", prefix, m_Len);
-							else if (String.Compare(cp, "yyLhs") == 0) OutputShortArray("yyLhs", prefix, m_Lhs);
-							else if (String.Compare(cp, "yyNames-strings") == 0) OutputNamesStrings(m_Names);
-							else if (String.Compare(cp, "yyNames") == 0) OutputNames(prefix);
-							else if (String.Compare(cp, "yyRindex") == 0) OutputShortArray("yyRindex", prefix, m_Rindex);
-							else if (String.Compare(cp, "yyRule-strings") == 0) OutputRuleStrings();
-							else if (String.Compare(cp, "yyRule") == 0) OutputRule(prefix);
-							else if (String.Compare(cp, "yySindex") == 0) OutputShortArray("yySindex", prefix, m_Sindex);
-							else if (String.Compare(cp, "yyTable") == 0) OutputShortArray("yyTable", prefix, m_Table);
-							else
-								m_Error.Errors.Add(String.Format("{0}: unknown call ({1}) in line {2}\n", m_Error.MyName, cp, lno));
-						}
-						continue;
+						if (String.Compare(cp, "actions") == 0) OutputSemanticActions();
+						else if (String.Compare(cp, "epilog") == 0) OutputStoredText(EpilogWriter, m_EpilogStream);
+						else if (String.Compare(cp, "local") == 0) OutputStoredText(LocalWriter, m_LocalStream);
+						else if (String.Compare(cp, "prolog") == 0) OutputStoredText(PrologWriter, m_PrologStream);
+						else if (String.Compare(cp, "tokens") == 0) OutputDefines(prefix);
+						else if (String.Compare(cp, "shortcuts") == 0) OutputShortcuts(prefix);
+						else if (String.Compare(cp, "version") == 0) OutputVersion(prefix);
+						else if (String.Compare(cp, "yyCheck") == 0) OutputShortArray("yyCheck", prefix, m_Check);
+						else if (String.Compare(cp, "yyDefRed") == 0) OutputShortArray("yyDefRed", prefix, m_DefRed);
+						else if (String.Compare(cp, "yyDgoto") == 0) OutputShortArray("yyDgoto", prefix, m_Dgoto);
+						else if (String.Compare(cp, "yyFinal") == 0) OutputFinal(prefix);
+						else if (String.Compare(cp, "yyGindex") == 0) OutputShortArray("yyGindex", prefix, m_Gindex);
+						else if (String.Compare(cp, "yyLen") == 0) OutputShortArray("yyLen", prefix, m_Len);
+						else if (String.Compare(cp, "yyLhs") == 0) OutputShortArray("yyLhs", prefix, m_Lhs);
+						else if (String.Compare(cp, "yyNames-strings") == 0) OutputNamesStrings(m_Names);
+						else if (String.Compare(cp, "yyNames") == 0) OutputNames(prefix);
+						else if (String.Compare(cp, "yyRindex") == 0) OutputShortArray("yyRindex", prefix, m_Rindex);
+						else if (String.Compare(cp, "yyRule-strings") == 0) OutputRuleStrings();
+						else if (String.Compare(cp, "yyRule") == 0) OutputRule(prefix);
+						else if (String.Compare(cp, "yySindex") == 0) OutputShortArray("yySindex", prefix, m_Sindex);
+						else if (String.Compare(cp, "yyTable") == 0) OutputShortArray("yyTable", prefix, m_Table);
+						else
+							m_Error.Errors.Add(String.Format("{0}: unknown call ({1}) in line {2}\n", m_Error.MyName, cp, lno));
+					}
+					continue;
 				}
 				m_Out.WriteLine(buf.ToCharArray(), 1, buf.Length - 1);
 				m_Outline++;
@@ -172,31 +170,27 @@ namespace Yacc
 
 		private string strtok(string buf, params char[] p)
 		{
-			if (buf != null)
-			{
+			if (buf != null) {
 				buf = buf.TrimStart(p);
 			}
-			else if (strtokbuf.Length == 0)
-			{
+			else if (strtokbuf.Length == 0) {
 				return null;
 			}
-			else
-			{
+			else {
 				buf = strtokbuf;
 			}
 
 			string[] strtoks = buf.Split(p, 2);
-			switch (strtoks.Length)
-			{
-				case 0:
-					strtokbuf = "";
-					return null;
-				case 1:
-					strtokbuf = "";
-					break;
-				default:
-					strtokbuf = strtoks[1];
-					break;
+			switch (strtoks.Length) {
+			case 0:
+				strtokbuf = "";
+				return null;
+			case 1:
+				strtokbuf = "";
+				break;
+			default:
+				strtokbuf = strtoks[1];
+				break;
 			}
 			return strtoks[0];
 		}
@@ -217,10 +211,8 @@ namespace Yacc
 
 			m_Out.Write("{0}{1,6},", prefix, list[0]);
 			j = 1;
-			for (i = 1; i < list.Count; ++i)
-			{
-				if (j >= 10)
-				{
+			for (i = 1; i < list.Count; ++i) {
+				if (j >= 10) {
 					m_Out.Write("\n{0}", prefix);
 					j = 0;
 					m_Outline++;
@@ -239,13 +231,11 @@ namespace Yacc
 
 			s = 0;
 			c = name[s];
-			if (c == '"')
-			{
+			if (c == '"') {
 				c = name[++s];
 				if (!Char.IsLetter(c) && c != '_' && c != '$')
 					return false;
-				while ((c = name[++s]) != '"')
-				{
+				while ((c = name[++s]) != '"') {
 					if (!Char.IsLetterOrDigit(c) && c != '_' && c != '$')
 						return false;
 				}
@@ -254,8 +244,7 @@ namespace Yacc
 
 			if (!Char.IsLetter(c) && c != '_' && c != '$')
 				return false;
-			foreach (char p in name)
-			{
+			foreach (char p in name) {
 				if (!Char.IsLetterOrDigit(p) && p != '_' && p != '$')
 					return false;
 			}
@@ -269,25 +258,20 @@ namespace Yacc
 			string name;
 			int s;
 
-			for (i = 2; i < m_Yacc.m_TokenCount; ++i)
-			{
+			token_enum = prefix;
+
+			for (i = 2; i < m_Yacc.m_TokenCount; ++i) {
 				name = m_Yacc.m_Symbols[i].Name;
 				s = 0;
-				if (is_C_identifier(name))
-				{
-					m_Out.Write("  {0} ", prefix);
+				if (is_C_identifier(name)) {
 					c = name[s];
-					if (c == '"')
-					{
-						while ((c = name[++s]) != '"')
-						{
+					if (c == '"') {
+						while ((c = name[++s]) != '"') {
 							m_Out.Write((char)c);
 						}
 					}
-					else
-					{
-						for (; ; )
-						{
+					else {
+						for (;;) {
 							m_Out.Write((char)c);
 							++s;
 							if (s >= name.Length)
@@ -296,12 +280,49 @@ namespace Yacc
 						}
 					}
 					m_Outline++;
-					m_Out.Write(" = {0};\n", m_Yacc.m_Symbols[i].Value);
+					m_Out.Write(" = {0},\n", m_Yacc.m_Symbols[i].Value);
 				}
 			}
 
 			m_Outline++;
-			m_Out.Write("  {0} yyErrorCode = {1};\n", prefix, m_Yacc.m_Symbols[1].Value);
+			m_Out.Write("  yyErrorCode = {0}\n", m_Yacc.m_Symbols[1].Value);
+		}
+
+		void OutputShortcuts(string prefix)
+		{
+			char c;
+			int i;
+			string name;
+			int s;
+
+			for (i = 2; i < m_Yacc.m_TokenCount; ++i) {
+				StringBuilder temp = new StringBuilder();
+				name = m_Yacc.m_Symbols[i].Name;
+				s = 0;
+				if (is_C_identifier(name)) {
+					m_Out.Write("  const {0} ", prefix);
+					c = name[s];
+					if (c == '"') {
+						while ((c = name[++s]) != '"') {
+							temp.Append((char)c);
+						}
+					}
+					else {
+						for (;;) {
+							temp.Append((char)c);
+							++s;
+							if (s >= name.Length)
+								break;
+							c = name[s];
+						}
+					}
+					m_Outline++;
+					m_Out.Write("{1} = {0}.{1};\n", prefix, temp.ToString());
+				}
+			}
+
+			m_Outline++;
+			m_Out.Write("  const int yyErrorCode = (int){0}.yyErrorCode;\n", prefix);
 		}
 
 		void OutputStoredText(TextWriter file, Stream name)
@@ -313,18 +334,16 @@ namespace Yacc
 			name.Seek(0, SeekOrigin.Begin);
 			In = new StreamReader(name);
 
-			if ((c = In.Read()) != Defs.EOF)
-			{
+			if ((c = In.Read()) != Defs.EOF) {
 				if (c == '\n')
 					m_Outline++;
 				m_Out.Write((char)c);
-				while ((c = In.Read()) != Defs.EOF)
-				{
+				while ((c = In.Read()) != Defs.EOF) {
 					if (c == '\n')
 						m_Outline++;
 					m_Out.Write((char)c);
 				}
-				m_Out.Write(LineFormat, m_Outline++ + 1, "-");
+				m_Out.WriteLine("#line default");
 			}
 			In.Close();
 		}
@@ -348,8 +367,7 @@ namespace Yacc
 			m_Outline++;
 			m_Out.Write("{0} 0 end-of-file\n", prefix);
 			m_Outline++;
-			for (i = 2; i < m_Yacc.m_TokenCount; ++i)
-			{
+			for (i = 2; i < m_Yacc.m_TokenCount; ++i) {
 				m_Out.Write("{0} {1} {2}\n", prefix, m_Yacc.m_Symbols[i].Value, m_Yacc.m_Symbols[i].Name);
 				m_Outline++;
 			}
@@ -362,26 +380,20 @@ namespace Yacc
 			int s;
 
 			j = 0; m_Out.Write("    ");
-			for (i = 0; i < symnam.Count; ++i)
-			{
-				if ((name = symnam[i]) != null)
-				{
+			for (i = 0; i < symnam.Count; ++i) {
+				if ((name = symnam[i]) != null) {
 					s = 0;
-					if (name[0] == '"')
-					{
+					if (name[0] == '"') {
 						k = 7;
-						while (name[++s] != '"')
-						{
+						while (name[++s] != '"') {
 							++k;
-							if (name[s] == '\\')
-							{
+							if (name[s] == '\\') {
 								k += 2;
 								if (name[++s] == '\\') ++k;
 							}
 						}
 						j += k;
-						if (j > 70)
-						{
+						if (j > 70) {
 							m_Out.Write("\n    ");
 							m_Outline++;
 							j = k;
@@ -389,10 +401,8 @@ namespace Yacc
 						m_Out.Write("\"\\\"");
 						name = symnam[i];
 						s = 0;
-						while (name[++s] != '"')
-						{
-							if (name[s] == '\\')
-							{
+						while (name[++s] != '"') {
+							if (name[s] == '\\') {
 								m_Out.Write("\\\\");
 								if (name[++s] == '\\') m_Out.Write("\\\\");
 								else m_Out.Write(name[s]);
@@ -402,35 +412,28 @@ namespace Yacc
 						}
 						m_Out.Write("\\\"\",");
 					}
-					else if (name[0] == '\'')
-					{
-						if (name[1] == '"')
-						{
+					else if (name[0] == '\'') {
+						if (name[1] == '"') {
 							j += 7;
-							if (j > 70)
-							{
+							if (j > 70) {
 								m_Out.Write("\n    ");
 								m_Outline++;
 								j = 7;
 							}
 							m_Out.Write("\"'\\\"'\",");
 						}
-						else
-						{
+						else {
 							k = 5;
-							while (name[++s] != '\'')
-							{
+							while (name[++s] != '\'') {
 								++k;
-								if (name[s] == '\\')
-								{
+								if (name[s] == '\\') {
 									k += 2;
 									if (name[++s] == '\\')
 										++k;
 								}
 							}
 							j += k;
-							if (j > 70)
-							{
+							if (j > 70) {
 								m_Out.Write("\n    ");
 								m_Outline++;
 								j = k;
@@ -438,10 +441,8 @@ namespace Yacc
 							m_Out.Write("\"'");
 							name = symnam[i];
 							s = 0;
-							while (name[++s] != '\'')
-							{
-								if (name[s] == '\\')
-								{
+							while (name[++s] != '\'') {
+								if (name[s] == '\\') {
 									m_Out.Write("\\\\");
 									if (name[++s] == '\\') m_Out.Write("\\\\");
 									else m_Out.Write(name[s]);
@@ -452,12 +453,10 @@ namespace Yacc
 							m_Out.Write("'\",");
 						}
 					}
-					else
-					{
+					else {
 						k = name.Length + 3;
 						j += k;
-						if (j > 70)
-						{
+						if (j > 70) {
 							m_Out.Write("\n    ");
 							m_Outline++;
 							j = k;
@@ -467,11 +466,9 @@ namespace Yacc
 						m_Out.Write("\",");
 					}
 				}
-				else
-				{
+				else {
 					j += 5;
-					if (j > 70)
-					{
+					if (j > 70) {
 						m_Out.Write("\n    ");
 						m_Outline++;
 						j = 5;
@@ -487,8 +484,7 @@ namespace Yacc
 		{
 			m_Out.Write("//yyRule {0}\n", m_Rule.Count - 2);
 			m_Outline++;
-			foreach (string rule in m_Rule)
-			{
+			foreach (string rule in m_Rule) {
 				m_Out.Write(rule + "\n");
 				m_Outline++;
 			}
@@ -501,20 +497,15 @@ namespace Yacc
 			int s;
 			string prefix = m_Yacc.tFlag ? "" : "//t";
 
-			for (i = 2; i < m_Yacc.m_RuleCount; ++i)
-			{
+			for (i = 2; i < m_Yacc.m_RuleCount; ++i) {
 				m_Out.Write("{0}    \"{1} :", prefix, m_Yacc.m_Rules[i].Lhs.Name);
-				for (j = m_Yacc.m_Rules[i].Rhs; m_Yacc.m_Items[j] > 0; ++j)
-				{
+				for (j = m_Yacc.m_Rules[i].Rhs; m_Yacc.m_Items[j] > 0; ++j) {
 					name = m_Yacc.m_Symbols[m_Yacc.m_Items[j]].Name;
 					s = 0;
-					if (name[0] == '"')
-					{
+					if (name[0] == '"') {
 						m_Out.Write(" \\\"");
-						while (name[++s] != '"')
-						{
-							if (name[s] == '\\')
-							{
+						while (name[++s] != '"') {
+							if (name[s] == '\\') {
 								if (name[1] == '\\') m_Out.Write("\\\\\\\\");
 								else m_Out.Write("\\\\{0}", name[1]);
 								++s;
@@ -524,12 +515,10 @@ namespace Yacc
 						}
 						m_Out.Write("\\\"");
 					}
-					else if (name[0] == '\'')
-					{
+					else if (name[0] == '\'') {
 						if (name[1] == '"')
 							m_Out.Write(" '\\\"'");
-						else if (name[1] == '\\')
-						{
+						else if (name[1] == '\\') {
 							if (name[2] == '\\') m_Out.Write(" '\\\\\\\\");
 							else m_Out.Write(" '\\\\{0}", name[2]);
 							s += 2;
@@ -552,8 +541,7 @@ namespace Yacc
 		{
 			int c, last = 0;
 
-			foreach (Rule<string> rule in m_Yacc.m_Rules)
-			{
+			foreach (Rule<string> rule in m_Yacc.m_Rules) {
 				if (rule.Action == null)
 					continue;
 
@@ -566,8 +554,7 @@ namespace Yacc
 				if (c == '\n')
 					m_Outline++;
 				m_Out.Write((char)c);
-				while ((c = ActionReader.Read()) != Defs.EOF)
-				{
+				while ((c = ActionReader.Read()) != Defs.EOF) {
 					if (c == '\n')
 						m_Outline++;
 					m_Out.Write((char)c);
@@ -578,13 +565,12 @@ namespace Yacc
 			if (last == 0)
 				return;
 
-			if (last != '\n')
-			{
+			if (last != '\n') {
 				m_Outline++;
 				m_Out.Write("\n      ");
 			}
 
-			m_Out.Write(LineFormat, m_Outline++ + 1, "-");
+			m_Out.WriteLine("#line default");
 		}
 	}
 }

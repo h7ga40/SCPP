@@ -41,7 +41,7 @@ namespace Yacc
 {
 	class Lalr<ActionType>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #endif // not lint
 
@@ -105,14 +105,11 @@ namespace Yacc
 			length = 0;
 			max = 0;
 			item_end = m_Yacc.m_Items.Length;
-			for (itemp = 0; itemp < item_end; itemp++)
-			{
-				if (m_Yacc.m_Items[itemp] >= 0)
-				{
+			for (itemp = 0; itemp < item_end; itemp++) {
+				if (m_Yacc.m_Items[itemp] >= 0) {
 					length++;
 				}
-				else
-				{
+				else {
 					if (length > max) max = length;
 					length = 0;
 				}
@@ -129,8 +126,7 @@ namespace Yacc
 			lookaheads = new short[m_Lr0.States.Count + 1];
 
 			k = 0;
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
 				lookaheads[i] = (short)k;
 				rp = m_Lr0.States[i].Reductions;
 				if (rp != null)
@@ -143,13 +139,10 @@ namespace Yacc
 			lookback = new Shorts[k];
 
 			k = 0;
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
 				rp = m_Lr0.States[i].Reductions;
-				if (rp != null)
-				{
-					for (j = 0; j < rp.Rules.Count; j++)
-					{
+				if (rp != null) {
+					for (j = 0; j < rp.Rules.Count; j++) {
 						LAruleno[k] = rp.Rules[j];
 						k++;
 					}
@@ -173,10 +166,8 @@ namespace Yacc
 			temp_map = -m_Yacc.m_TokenCount;
 
 			ngotos = 0;
-			foreach (Shifts<ActionType> sp in m_Lr0.Shiftses)
-			{
-				for (i = sp.Shift.Length - 1; i >= 0; i--)
-				{
+			foreach (Shifts<ActionType> sp in m_Lr0.Shiftses) {
+				for (i = sp.Shift.Length - 1; i >= 0; i--) {
 					symbol = sp.Shift[i].AccessingSymbol.Index;
 
 					if (m_Yacc.IsToken(symbol)) break;
@@ -190,8 +181,7 @@ namespace Yacc
 			}
 
 			k = 0;
-			for (i = m_Yacc.m_TokenCount; i < m_Yacc.m_Symbols.Length; i++)
-			{
+			for (i = m_Yacc.m_TokenCount; i < m_Yacc.m_Symbols.Length; i++) {
 				temp_map_inst[temp_map + i] = (short)k;
 				k += goto_map_inst[goto_map + i];
 			}
@@ -205,11 +195,9 @@ namespace Yacc
 			from_state = new State<ActionType>[ngotos];
 			to_state = new State<ActionType>[ngotos];
 
-			foreach (Shifts<ActionType> sp in m_Lr0.Shiftses)
-			{
+			foreach (Shifts<ActionType> sp in m_Lr0.Shiftses) {
 				state1 = sp.State;
-				for (i = sp.Shift.Length - 1; i >= 0; i--)
-				{
+				for (i = sp.Shift.Length - 1; i >= 0; i--) {
 					state2 = sp.Shift[i];
 					symbol = state2.AccessingSymbol.Index;
 
@@ -234,8 +222,7 @@ namespace Yacc
 			low = goto_map_inst[goto_map + symbol];
 			high = goto_map_inst[goto_map + symbol + 1];
 
-			for (; ; )
-			{
+			for (;;) {
 				System.Diagnostics.Debug.Assert(low <= high);
 				middle = (low + high) >> 1;
 				s = from_state[middle].Number;
@@ -271,32 +258,27 @@ namespace Yacc
 			nedges = 0;
 
 			rowp = 0;
-			for (i = 0; i < ngotos; i++)
-			{
+			for (i = 0; i < ngotos; i++) {
 				stateno = to_state[i].Number;
 				sp = m_Lr0.States[stateno].Shifts;
 
-				if (sp != null)
-				{
+				if (sp != null) {
 					k = sp.Shift.Length;
 
-					for (j = 0; j < k; j++)
-					{
+					for (j = 0; j < k; j++) {
 						symbol = sp.Shift[j].AccessingSymbol.Index;
 						if (m_Yacc.IsVar(symbol))
 							break;
 						Defs.SETBIT(F, rowp, symbol);
 					}
 
-					for (; j < k; j++)
-					{
+					for (; j < k; j++) {
 						symbol = sp.Shift[j].AccessingSymbol.Index;
 						if (m_Yacc.m_Symbols[symbol].Nullable)
 							edge[nedges++] = (short)MapGoto(stateno, symbol);
 					}
 
-					if (nedges != 0)
-					{
+					if (nedges != 0) {
 						reads[i] = rp = new short[nedges + 1];
 
 						for (j = 0; j < nedges; j++)
@@ -339,26 +321,22 @@ namespace Yacc
 			edge = new short[ngotos + 1];
 			states = new State<ActionType>[maxrhs + 1];
 
-			for (i = 0; i < ngotos; i++)
-			{
+			for (i = 0; i < ngotos; i++) {
 				nedges = 0;
 				state1 = from_state[i];
 				symbol1 = to_state[i].AccessingSymbol.Index;
 
-				for (rulep = m_Yacc.m_Symbols[symbol1].Derives; m_Yacc.m_Derives[rulep] != null; rulep++)
-				{
+				for (rulep = m_Yacc.m_Symbols[symbol1].Derives; m_Yacc.m_Derives[rulep] != null; rulep++) {
 					length = 1;
 					states[0] = state1;
 					state = state1;
 
-					for (rp = m_Yacc.m_Derives[rulep].Rhs; m_Yacc.m_Items[rp] >= 0; rp++)
-					{
+					for (rp = m_Yacc.m_Derives[rulep].Rhs; m_Yacc.m_Items[rp] >= 0; rp++) {
 						symbol2 = m_Yacc.m_Items[rp];
 						sp = state.Shifts;
 						k = sp.Shift.Length;
 
-						for (j = 0; j < k; j++)
-						{
+						for (j = 0; j < k; j++) {
 							state = sp.Shift[j];
 							if (state.AccessingSymbol.Index == symbol2) break;
 						}
@@ -370,12 +348,10 @@ namespace Yacc
 
 					length--;
 					done = false;
-					while (!done)
-					{
+					while (!done) {
 						done = true;
 						rp--;
-						if (m_Yacc.IsVar(m_Yacc.m_Items[rp]))
-						{
+						if (m_Yacc.IsVar(m_Yacc.m_Items[rp])) {
 							state = states[--length];
 							edge[nedges++] = (short)MapGoto(state.Number, m_Yacc.m_Items[rp]);
 							if (m_Yacc.m_Symbols[m_Yacc.m_Items[rp]].Nullable && length > 0) done = false;
@@ -383,8 +359,7 @@ namespace Yacc
 					}
 				}
 
-				if (nedges != 0)
-				{
+				if (nedges != 0) {
 					includes[i] = shortp = new short[nedges + 1];
 					for (j = 0; j < nedges; j++)
 						shortp[j] = edge[j];
@@ -407,8 +382,7 @@ namespace Yacc
 			i = lookaheads[stateno];
 			k = lookaheads[stateno + 1];
 			found = false;
-			while (!found && i < k)
-			{
+			while (!found && i < k) {
 				if (LAruleno[i] == ruleno)
 					found = true;
 				else
@@ -434,12 +408,10 @@ namespace Yacc
 
 			nedges = new short[n];
 
-			for (i = 0; i < n; i++)
-			{
+			for (i = 0; i < n; i++) {
 				sp = R[i];
 				spi = 0;
-				if (sp != null)
-				{
+				if (sp != null) {
 					while (sp[spi] >= 0)
 						nedges[sp[spi++]]++;
 				}
@@ -448,11 +420,9 @@ namespace Yacc
 			new_R = new short[n][];
 			temp_R = new int[n];
 
-			for (i = 0; i < n; i++)
-			{
+			for (i = 0; i < n; i++) {
 				k = nedges[i];
-				if (k > 0)
-				{
+				if (k > 0) {
 					sp = new short[k + 1];
 					new_R[i] = sp;
 					temp_R[i] = 0;
@@ -460,15 +430,12 @@ namespace Yacc
 				}
 			}
 
-			for (i = 0; i < n; i++)
-			{
+			for (i = 0; i < n; i++) {
 				sp = R[i];
 				spi = 0;
-				if (sp != null)
-				{
+				if (sp != null) {
 					int j;
-					while ((j = sp[spi]) >= 0)
-					{
+					while ((j = sp[spi]) >= 0) {
 						new_R[j][temp_R[j]++] = (short)i;
 						spi++;
 					}
@@ -493,11 +460,9 @@ namespace Yacc
 
 			rowp = 0;
 			n = lookaheads[m_Lr0.States.Count];
-			for (i = 0; i < n; i++)
-			{
+			for (i = 0; i < n; i++) {
 				fp3 = rowp + tokensetsize;
-				for (sp = lookback[i]; sp != null; sp = sp.next)
-				{
+				for (sp = lookback[i]; sp != null; sp = sp.next) {
 					fp1 = rowp;
 					fp2 = tokensetsize * sp.value;
 					while (fp1 < fp3)
@@ -522,8 +487,7 @@ namespace Yacc
 			for (i = 0; i < ngotos; i++)
 				INDEX[i] = 0;
 
-			for (i = 0; i < ngotos; i++)
-			{
+			for (i = 0; i < ngotos; i++) {
 				if (INDEX[i] == 0 && R[i] != null)
 					Traverse(i);
 			}
@@ -549,10 +513,8 @@ namespace Yacc
 			fp3 = Base + tokensetsize;
 
 			rp = 0;
-			if (R[i] != null)
-			{
-				while ((j = R[i][rp++]) >= 0)
-				{
+			if (R[i] != null) {
+				while ((j = R[i][rp++]) >= 0) {
 					if (INDEX[j] == 0)
 						Traverse(j);
 
@@ -567,10 +529,8 @@ namespace Yacc
 				}
 			}
 
-			if (INDEX[i] == height)
-			{
-				for (; ; )
-				{
+			if (INDEX[i] == height) {
+				for (;;) {
 					j = VERTICES[top--];
 					INDEX[j] = (short)infinity;
 

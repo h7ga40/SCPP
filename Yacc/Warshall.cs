@@ -41,7 +41,7 @@ namespace Yacc
 {
 	static class Warshall
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)warshall.c	5.4 (Berkeley) 5/24/93";
 #endif // not lint
 
@@ -63,30 +63,25 @@ namespace Yacc
 			cword = 0;
 			i = 0;
 			rowi = 0;
-			while (rowi < relend)
-			{
+			while (rowi < relend) {
 				ccol = cword;
 				rowj = 0;
 
-				while (rowj < relend)
-				{
-					if ((R[ccol] & (1u << i)) != 0)
-					{
+				while (rowj < relend) {
+					if ((R[ccol] & (1u << i)) != 0) {
 						rp = rowi;
 						rend = rowj + rowsize;
 						while (rowj < rend)
 							R[rowj++] |= R[rp++];
 					}
-					else
-					{
+					else {
 						rowj += rowsize;
 					}
 
 					ccol += rowsize;
 				}
 
-				if (++i >= Defs.BITS_PER_WORD)
-				{
+				if (++i >= Defs.BITS_PER_WORD) {
 					i = 0;
 					cword++;
 				}
@@ -109,11 +104,9 @@ namespace Yacc
 
 			i = 0;
 			rp = 0;
-			while (rp < relend)
-			{
+			while (rp < relend) {
 				R[rp] |= (1u << i);
-				if (++i >= Defs.BITS_PER_WORD)
-				{
+				if (++i >= Defs.BITS_PER_WORD) {
 					i = 0;
 					rp++;
 				}

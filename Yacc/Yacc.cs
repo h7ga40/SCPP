@@ -43,18 +43,21 @@ namespace Yacc
 {
 	public class Yacc<ActionType>
 	{
-#if ! lint
+#if !lint
 		static readonly string copyright =
 			"@(#) Copyright (c) 1989 The Regents of the University of California.\n"
 			+ " All rights reserved.\n";
 #endif // not lint
 
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #endif // not lint
-		bool m_tFlag;
 
-		private TextWriter m_TraceWriter;	/*  y.trace					    */
+		private string m_MyName = "yacc";
+		private bool m_tFlag;
+		private bool m_vFlag;
+
+		private TextWriter m_TraceWriter;   /*  y.trace					    */
 
 		internal int m_RuleCount;
 		internal int m_TokenCount;
@@ -108,46 +111,48 @@ namespace Yacc
 			m_Verbose = new Verbose<ActionType>(this);
 		}
 
-		public TextWriter TraceWriter
-		{
+		public string MyName {
+			get { return m_MyName; }
+			set { m_MyName = value; }
+		}
+
+		public TextWriter TraceWriter {
 			get { return m_TraceWriter; }
 			set { m_TraceWriter = value; }
 		}
 
-		public bool tFlag
-		{
+		public bool tFlag {
 			get { return m_tFlag; }
 			set { m_tFlag = value; }
 		}
 
-		public Error Error
-		{
+		public bool vFlag {
+			get { return m_vFlag; }
+			set { m_vFlag = value; }
+		}
+
+		public Error Error {
 			get { return m_Error; }
 		}
 
-		public Grammar<ActionType> Grammar
-		{
+		public Grammar<ActionType> Grammar {
 			get { return m_Grammar; }
 			set { m_Grammar = value; }
 		}
 
-		internal Lr0<ActionType> Lr0
-		{
+		internal Lr0<ActionType> Lr0 {
 			get { return m_Lr0; }
 		}
 
-		internal Lalr<ActionType> Lalr
-		{
+		internal Lalr<ActionType> Lalr {
 			get { return m_Lalr; }
 		}
 
-		internal MakeParser<ActionType> MakeParser
-		{
+		internal MakeParser<ActionType> MakeParser {
 			get { return m_MakeParser; }
 		}
 
-		public Verbose<ActionType> Verbose
-		{
+		public Verbose<ActionType> Verbose {
 			get { return m_Verbose; }
 		}
 
@@ -172,8 +177,7 @@ namespace Yacc
 			int i;
 
 			m_Lhs.Add(m_Symbols[m_StartSymbol].Value);
-			for (i = 3; i < m_RuleCount; ++i)
-			{
+			for (i = 3; i < m_RuleCount; ++i) {
 				m_Lhs.Add(m_Rules[i].Lhs.Value);
 			}
 		}
@@ -183,8 +187,7 @@ namespace Yacc
 			int i;
 
 			m_Len.Add(2);
-			for (i = 3; i < m_RuleCount; ++i)
-			{
+			for (i = 3; i < m_RuleCount; ++i) {
 				m_Len.Add((short)(m_Rules[i + 1].Rhs - m_Rules[i].Rhs - 1));
 			}
 		}
@@ -193,8 +196,7 @@ namespace Yacc
 		{
 			int i;
 
-			for (i = 0; i < m_Lr0.States.Count; ++i)
-			{
+			for (i = 0; i < m_Lr0.States.Count; ++i) {
 				m_DefRed.Add((short)(m_MakeParser.defred[i] != 0 ? m_MakeParser.defred[i] - 2 : 0));
 			}
 		}
@@ -227,31 +229,25 @@ namespace Yacc
 
 			shifts = new short[m_TokenCount];
 			reduces = new short[m_TokenCount];
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
 				State<ActionType> core = m_Lr0.States[i];
 				if (core.Parser.Count == 0)
 					continue;
 
-				for (j = 0; j < m_TokenCount; ++j)
-				{
+				for (j = 0; j < m_TokenCount; ++j) {
 					shifts[j] = 0;
 					reduces[j] = 0;
 				}
 
 				shiftcount = 0;
 				reducecount = 0;
-				foreach (Action<ActionType> p in core.Parser)
-				{
-					if (p.Suppressed == 0)
-					{
-						if (p.ActionCode == ActionCode.SHIFT)
-						{
+				foreach (Action<ActionType> p in core.Parser) {
+					if (p.Suppressed == 0) {
+						if (p.ActionCode == ActionCode.SHIFT) {
 							++shiftcount;
 							shifts[p.Symbol.Index] = p.Rule.Number;
 						}
-						else if (p.ActionCode == ActionCode.REDUCE && p.Rule.Number != m_MakeParser.defred[i])
-						{
+						else if (p.ActionCode == ActionCode.REDUCE && p.Rule.Number != m_MakeParser.defred[i]) {
 							++reducecount;
 							reduces[p.Symbol.Index] = p.Rule.Number;
 						}
@@ -262,18 +258,15 @@ namespace Yacc
 				m_Tally[m_Lr0.States.Count + i] = (short)reducecount;
 				m_Width[i] = 0;
 				m_Width[m_Lr0.States.Count + i] = 0;
-				if (shiftcount > 0)
-				{
+				if (shiftcount > 0) {
 					m_Froms[i] = r = new short[shiftcount];
 					ri = 0;
 					m_Tos[i] = s = new short[shiftcount];
 					si = 0;
 					min = Defs.MAXSHORT;
 					max = 0;
-					for (j = 0; j < m_TokenCount; ++j)
-					{
-						if (shifts[j] != 0)
-						{
+					for (j = 0; j < m_TokenCount; ++j) {
+						if (shifts[j] != 0) {
 							if (min > m_Symbols[j].Value)
 								min = m_Symbols[j].Value;
 							if (max < m_Symbols[j].Value)
@@ -284,18 +277,15 @@ namespace Yacc
 					}
 					m_Width[i] = (short)(max - min + 1);
 				}
-				if (reducecount > 0)
-				{
+				if (reducecount > 0) {
 					m_Froms[m_Lr0.States.Count + i] = r = new short[reducecount];
 					ri = 0;
 					m_Tos[m_Lr0.States.Count + i] = s = new short[reducecount];
 					si = 0;
 					min = Defs.MAXSHORT;
 					max = 0;
-					for (j = 0; j < m_TokenCount; ++j)
-					{
-						if (reduces[j] != 0)
-						{
+					for (j = 0; j < m_TokenCount; ++j) {
+						if (reduces[j] != 0) {
 							if (min > m_Symbols[j].Value)
 								min = m_Symbols[j].Value;
 							if (max < m_Symbols[j].Value)
@@ -319,8 +309,7 @@ namespace Yacc
 
 			m_Dgoto.Add((short)k);
 			SaveColumn(m_StartSymbol + 1, k);
-			for (i = m_StartSymbol + 2; i < m_Symbols.Length; ++i)
-			{
+			for (i = m_StartSymbol + 2; i < m_Symbols.Length; ++i) {
 				k = DefaultGoto(i);
 				m_Dgoto.Add((short)k);
 				SaveColumn(i, k);
@@ -348,10 +337,8 @@ namespace Yacc
 
 			max = 0;
 			default_state = 0;
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
-				if (m_StateCount[i] > max)
-				{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
+				if (m_StateCount[i] > max) {
 					max = m_StateCount[i];
 					default_state = i;
 				}
@@ -377,8 +364,7 @@ namespace Yacc
 			n = m_Lalr.goto_map_inst[m_Lalr.goto_map + symbol + 1];
 
 			count = 0;
-			for (i = m; i < n; i++)
-			{
+			for (i = m; i < n; i++) {
 				if (m_Lalr.to_state[i].Number != default_state)
 					++count;
 			}
@@ -391,10 +377,8 @@ namespace Yacc
 			m_Tos[symno] = sp2 = new short[count];
 			sp2i = 0;
 
-			for (i = m; i < n; i++)
-			{
-				if (m_Lalr.to_state[i].Number != default_state)
-				{
+			for (i = m; i < n; i++) {
+				if (m_Lalr.to_state[i].Number != default_state) {
 					sp1[sp1i++] = m_Lalr.from_state[i].Number;
 					sp2[sp2i++] = m_Lalr.to_state[i].Number;
 				}
@@ -415,10 +399,8 @@ namespace Yacc
 			m_Order = new short[m_VectorCount];
 			m_EntryCount = 0;
 
-			for (i = 0; i < m_VectorCount; i++)
-			{
-				if (m_Tally[i] > 0)
-				{
+			for (i = 0; i < m_VectorCount; i++) {
+				if (m_Tally[i] > 0) {
 					t = m_Tally[i];
 					w = m_Width[i];
 					j = m_EntryCount - 1;
@@ -449,8 +431,7 @@ namespace Yacc
 
 			m_LowZero = 0;
 
-			for (i = 0; i < m_EntryCount; i++)
-			{
+			for (i = 0; i < m_EntryCount; i++) {
 				state = MatchingVector(i);
 
 				if (state < 0)
@@ -496,15 +477,13 @@ namespace Yacc
 			t = m_Tally[i];
 			w = m_Width[i];
 
-			for (prev = vector - 1; prev >= 0; prev--)
-			{
+			for (prev = vector - 1; prev >= 0; prev--) {
 				j = m_Order[prev];
 				if (m_Width[j] != w || m_Tally[j] != t)
 					return -1;
 
 				match = 1;
-				for (k = 0; match != 0 && k < t; k++)
-				{
+				for (k = 0; match != 0 && k < t; k++) {
 					if (m_Tos[j][k] != m_Tos[i][k] || m_Froms[j][k] != m_Froms[i][k])
 						match = 0;
 				}
@@ -536,21 +515,17 @@ namespace Yacc
 			for (k = 1; k < t; ++k)
 				if (m_LowZero - from[k] > j)
 					j = m_LowZero - from[k];
-			for (; ; ++j)
-			{
+			for (; ; ++j) {
 				if (j == 0)
 					continue;
 				ok = 1;
-				for (k = 0; ok != 0 && k < t; k++)
-				{
+				for (k = 0; ok != 0 && k < t; k++) {
 					loc = j + from[k];
-					if (loc >= m_Table.Count)
-					{
+					if (loc >= m_Table.Count) {
 						if (loc >= Defs.MAXTABLE)
 							m_Error.Fatal("maximum m_Table size exceeded");
 
-						for (l = m_Table.Count; l <= loc; ++l)
-						{
+						for (l = m_Table.Count; l <= loc; ++l) {
 							m_Table.Add(0);
 							m_Check.Add(-1);
 						}
@@ -559,15 +534,12 @@ namespace Yacc
 					if (m_Check[loc] != -1)
 						ok = 0;
 				}
-				for (k = 0; ok != 0 && k < vector; k++)
-				{
+				for (k = 0; ok != 0 && k < vector; k++) {
 					if (m_Pos[k] == j)
 						ok = 0;
 				}
-				if (ok != 0)
-				{
-					for (k = 0; k < t; k++)
-					{
+				if (ok != 0) {
+					for (k = 0; k < t; k++) {
 						loc = j + from[k];
 						m_Table[loc] = to[k];
 						m_Check[loc] = from[k];
@@ -585,8 +557,7 @@ namespace Yacc
 		{
 			int i;
 
-			for (i = 0; i < m_Lr0.States.Count; ++i)
-			{
+			for (i = 0; i < m_Lr0.States.Count; ++i) {
 				m_Sindex.Add(m_Base[i]);
 			}
 		}
@@ -596,8 +567,7 @@ namespace Yacc
 			int i;
 
 			m_Rindex.Add(m_Base[m_Lr0.States.Count]);
-			for (i = m_Lr0.States.Count + 1; i < 2 * m_Lr0.States.Count; ++i)
-			{
+			for (i = m_Lr0.States.Count + 1; i < 2 * m_Lr0.States.Count; ++i) {
 				m_Rindex.Add(m_Base[i]);
 			}
 		}
@@ -607,8 +577,7 @@ namespace Yacc
 			int i;
 
 			m_Gindex.Add(m_Base[2 * m_Lr0.States.Count]);
-			for (i = 2 * m_Lr0.States.Count + 1; i < m_VectorCount - 1; ++i)
-			{
+			for (i = 2 * m_Lr0.States.Count + 1; i < m_VectorCount - 1; ++i) {
 				m_Gindex.Add(m_Base[i]);
 			}
 		}
@@ -634,12 +603,10 @@ namespace Yacc
 			int i, j;
 			StringBuilder str;
 
-			for (i = 2; i < m_RuleCount; ++i)
-			{
+			for (i = 2; i < m_RuleCount; ++i) {
 				str = new StringBuilder(m_Rules[i].Lhs.Name);
 				str.Append(":");
-				for (j = m_Rules[i].Rhs; m_Items[j] > 0; ++j)
-				{
+				for (j = m_Rules[i].Rhs; m_Items[j] > 0; ++j) {
 					str.Append(" ");
 					str.Append(m_Symbols[m_Items[j]].Name);
 				}

@@ -112,8 +112,7 @@ namespace Yacc
 
 		protected Rules DeclareRule(Symbol symbol)
 		{
-			if (m_Goal == null)
-			{
+			if (m_Goal == null) {
 				if (symbol.Class == SymbolClasse.TERM)
 					m_Error.TerminalStart(symbol.Name);
 				m_Goal = symbol;
@@ -137,33 +136,29 @@ namespace Yacc
 			else
 				cache.Append('"');
 
-			for (i = 0; i < n; ++i)
-			{
+			for (i = 0; i < n; ++i) {
 				c = name[i];
-				if (c == '\\' || c == cache[0])
-				{
+				if (c == '\\' || c == cache[0]) {
 					cache.Append('\\');
 					cache.Append(c);
 				}
 				else if (IsPrint(c))
 					cache.Append(c);
-				else
-				{
+				else {
 					cache.Append('\\');
-					switch (c)
-					{
-						case '\x7': cache.Append('a'); break;
-						case '\b': cache.Append('b'); break;
-						case '\f': cache.Append('f'); break;
-						case '\n': cache.Append('n'); break;
-						case '\r': cache.Append('r'); break;
-						case '\t': cache.Append('t'); break;
-						case '\v': cache.Append('v'); break;
-						default:
-							cache.Append(((c >> 6) & 7) + '0');
-							cache.Append(((c >> 3) & 7) + '0');
-							cache.Append((c & 7) + '0');
-							break;
+					switch (c) {
+					case '\x7': cache.Append('a'); break;
+					case '\b': cache.Append('b'); break;
+					case '\f': cache.Append('f'); break;
+					case '\n': cache.Append('n'); break;
+					case '\r': cache.Append('r'); break;
+					case '\t': cache.Append('t'); break;
+					case '\v': cache.Append('v'); break;
+					default:
+						cache.Append(((c >> 6) & 7) + '0');
+						cache.Append(((c >> 3) & 7) + '0');
+						cache.Append((c & 7) + '0');
+						break;
 					}
 				}
 			}
@@ -206,8 +201,7 @@ namespace Yacc
 				String.Compare(name, "$end") == 0)
 				return true;
 
-			if (name[0] == '$' && name[1] == '$' && Char.IsDigit(name[2]))
-			{
+			if (name[0] == '$' && name[1] == '$' && Char.IsDigit(name[2])) {
 				s = 3;
 				while (Char.IsDigit(name[s])) ++s;
 				if (s == name.Length) return true;
@@ -218,8 +212,7 @@ namespace Yacc
 
 		protected Symbol LookupSymbol(string name)
 		{
-			foreach (char c in name)
-			{
+			foreach (char c in name) {
 				if (!IsIdent(c))
 					throw new ArgumentException("有効な識別子ではありません。", "name");
 			}
@@ -243,28 +236,24 @@ namespace Yacc
 			if (assoc != KeywordCode.TOKEN) m_Precedence++;
 
 			int i = 0;
-			foreach (Symbol bp in symbols)
-			{
+			foreach (Symbol bp in symbols) {
 				if (bp == m_Goal) m_Error.TokenizedStart(bp.Name);
 				bp.Class = SymbolClasse.TERM;
 
-				if (tag != null)
-				{
+				if (tag != null) {
 					if (bp.Tag != null && tag.CompareTo(bp.Tag) != 0)
 						m_Error.RetypedWarning(bp.Name);
 					bp.Tag = tag;
 				}
 
-				if (assoc != KeywordCode.TOKEN)
-				{
+				if (assoc != KeywordCode.TOKEN) {
 					if (bp.Precedence != 0 && m_Precedence != bp.Precedence)
 						m_Error.ReprecWarning(bp.Name);
 					bp.Association = assoc;
 					bp.Precedence = (short)m_Precedence;
 				}
 
-				if (values != null)
-				{
+				if (values != null) {
 					value = values[i];
 					if (bp.Value != Defs.UNDEFINED && value != bp.Value)
 						m_Error.RevaluedWarning(bp.Name);
@@ -276,8 +265,7 @@ namespace Yacc
 
 		protected void DeclareTypes(string tag, params Symbol[] symbols)
 		{
-			foreach (Symbol bp in symbols)
-			{
+			foreach (Symbol bp in symbols) {
 				if (bp.Tag != null && tag != bp.Tag)
 					Error.RetypedWarning(bp.Name);
 				bp.Tag = tag;
@@ -323,10 +311,8 @@ namespace Yacc
 			if (m_Goal.Class == SymbolClasse.UNKNOWN)
 				m_Error.UndefinedGoal(m_Goal.Name);
 
-			foreach (Symbol bp in m_SymbolTable)
-			{
-				if (bp.Class == SymbolClasse.UNKNOWN)
-				{
+			foreach (Symbol bp in m_SymbolTable) {
+				if (bp.Class == SymbolClasse.UNKNOWN) {
 					m_Error.UndefinedSymbolWarning(bp.Name);
 					bp.Class = SymbolClasse.TERM;
 				}
@@ -340,8 +326,7 @@ namespace Yacc
 
 			int nsyms = 2;
 			m_Yacc.m_TokenCount = 1;
-			foreach (Symbol bp in m_SymbolTable)
-			{
+			foreach (Symbol bp in m_SymbolTable) {
 				++nsyms;
 				if (bp.Class == SymbolClasse.TERM) ++m_Yacc.m_TokenCount;
 			}
@@ -362,8 +347,8 @@ namespace Yacc
 #endif
 			v = new Symbol[nsyms];
 
-			v[0] = null;					// $end
-			v[m_Yacc.m_StartSymbol] = null;	// $accept
+			v[0] = null;                    // $end
+			v[m_Yacc.m_StartSymbol] = null; // $accept
 
 			i = 1;
 			j = m_Yacc.m_StartSymbol + 1;
@@ -372,7 +357,7 @@ namespace Yacc
 #else
 			foreach (Symbol bp in sortedSymbols)
 #endif
-            {
+			{
 				if (bp.Class == SymbolClasse.TERM)
 					v[i++] = bp;
 				else
@@ -386,29 +371,24 @@ namespace Yacc
 			m_Goal.Index = (short)(m_Yacc.m_StartSymbol + 1);
 			k = m_Yacc.m_StartSymbol + 2;
 			while (++i < nsyms)
-				if (v[i] != m_Goal)
-				{
+				if (v[i] != m_Goal) {
 					v[i].Index = (short)k;
 					++k;
 				}
 
 			m_Goal.Value = 0;
 			k = 1;
-			for (i = m_Yacc.m_StartSymbol + 1; i < nsyms; ++i)
-			{
-				if (v[i] != m_Goal)
-				{
+			for (i = m_Yacc.m_StartSymbol + 1; i < nsyms; ++i) {
+				if (v[i] != m_Goal) {
 					v[i].Value = (short)k;
 					++k;
 				}
 			}
 
 			k = 0;
-			for (i = 1; i < m_Yacc.m_TokenCount; ++i)
-			{
+			for (i = 1; i < m_Yacc.m_TokenCount; ++i) {
 				n = v[i].Value;
-				if (n > 256)
-				{
+				if (n > 256) {
 					for (j = k++; j > 0 && v[j - 1].Value > n; --j)
 						v[j].Value = v[j - 1].Value;
 					v[j].Value = (short)n;
@@ -420,12 +400,9 @@ namespace Yacc
 
 			j = 0;
 			n = 257;
-			for (i = 2; i < m_Yacc.m_TokenCount; ++i)
-			{
-				if (v[i].Value == Defs.UNDEFINED)
-				{
-					while (j < k && n == v[j].Value)
-					{
+			for (i = 2; i < m_Yacc.m_TokenCount; ++i) {
+				if (v[i].Value == Defs.UNDEFINED) {
+					while (j < k && n == v[j].Value) {
 						while (++j < k && n == v[j].Value) continue;
 						++n;
 					}
@@ -439,8 +416,7 @@ namespace Yacc
 			m_Yacc.m_Symbols[m_Yacc.m_StartSymbol] = new Symbol("$accept", -1, 0, KeywordCode.TOKEN);
 			m_Yacc.m_Symbols[m_Yacc.m_StartSymbol].Index = (short)m_Yacc.m_StartSymbol;
 
-			for (++i; i < nsyms; ++i)
-			{
+			for (++i; i < nsyms; ++i) {
 				k = v[i].Index;
 				m_Yacc.m_Symbols[k] = v[i];
 			}
@@ -471,17 +447,14 @@ namespace Yacc
 
 			Rule<ActionType> rule;
 			j = 4;
-			for (i = 3; i < m_Yacc.m_Rules.Count; ++i)
-			{
+			for (i = 3; i < m_Yacc.m_Rules.Count; ++i) {
 				rule = m_Yacc.m_Rules[i];
 				rule.Rhs = (short)j;
 				assoc = KeywordCode.TOKEN;
 				prec = 0;
-				while (m_Items[j] != null)
-				{
+				while (m_Items[j] != null) {
 					m_Yacc.m_Items[j] = m_Items[j].Index;
-					if (m_Items[j].Class == SymbolClasse.TERM)
-					{
+					if (m_Items[j].Class == SymbolClasse.TERM) {
 						prec = m_Items[j].Precedence;
 						assoc = m_Items[j].Association;
 					}
@@ -489,8 +462,7 @@ namespace Yacc
 				}
 				m_Yacc.m_Items[j] = (short)(-i);
 				++j;
-				if (rule.Precedence == Defs.UNDEFINED)
-				{
+				if (rule.Precedence == Defs.UNDEFINED) {
 					rule.Precedence = (short)prec;
 					rule.Association = assoc;
 				}
@@ -508,10 +480,8 @@ namespace Yacc
 
 			System.Diagnostics.Debug.Write("//m_Items\n");
 			j = 0;
-			foreach (Symbol item in m_Items)
-			{
-				if (j >= 10)
-				{
+			foreach (Symbol item in m_Items) {
+				if (j >= 10) {
 					System.Diagnostics.Debug.Write("\n");
 					j = 0;
 				}
@@ -560,12 +530,12 @@ namespace Yacc
 
 			public Symbol Symbol { get { return m_Symbol; } }
 			internal Rule<ActionType> Rule { get { return m_Rule; } }
+			public bool LastWasAction { get { return m_LastWasAction; } }
 			public bool Error { get { return m_Error; } }
 
 			public void AddSymbols(params Symbol[] symbols)
 			{
-				if (m_Rule == null)
-				{
+				if (m_Rule == null) {
 					if (!StartRule(m_Symbol))
 						m_Error = true;
 				}
@@ -573,8 +543,7 @@ namespace Yacc
 					InsertEmptyRule();
 				m_LastWasAction = false;
 
-				foreach (Symbol symbol in symbols)
-				{
+				foreach (Symbol symbol in symbols) {
 					m_Owner.m_Items.Add(symbol);
 				}
 #if OUTPUT_CODE
@@ -616,8 +585,7 @@ namespace Yacc
 			{
 				int i;
 
-				if (!m_LastWasAction && m_Rule.Lhs.Tag != null)
-				{
+				if (!m_LastWasAction && m_Rule.Lhs.Tag != null) {
 					for (i = m_Owner.m_Items.Count - 1; m_Owner.m_Items[i] != null; --i) continue;
 					/** ats: there is no way to check superclasses; therefore, only 'null' draws a warning. Was:
 					if (pitem[i + 1] == null || pitem[i + 1].tag != rules[rules.Count].plhs.tag)
@@ -703,8 +671,7 @@ namespace Yacc
 
 			public void AddAction(ActionType action)
 			{
-				if (m_Rule == null)
-				{
+				if (m_Rule == null) {
 					if (!StartRule(m_Symbol))
 						m_Error = true;
 				}
@@ -712,13 +679,13 @@ namespace Yacc
 					InsertEmptyRule();
 				m_LastWasAction = true;
 
-                Rule<ActionType> rule = m_Owner.m_Yacc.m_Rules[m_Owner.m_Yacc.m_Rules.Count - 1];
+				Rule<ActionType> rule = m_Owner.m_Yacc.m_Rules[m_Owner.m_Yacc.m_Rules.Count - 1];
 
-                int n = 0;
-                for (int i = m_Owner.m_Items.Count - 1; m_Owner.m_Items[i] != null; --i) ++n;
+				int n = 0;
+				for (int i = m_Owner.m_Items.Count - 1; m_Owner.m_Items[i] != null; --i) ++n;
 
-                rule.Offset = n;
-                rule.Action = action;
+				rule.Offset = n;
+				rule.Action = action;
 #if OUTPUT_CODE
 				DebugWriteAddRules();
 				m_Owner.sb.Append("lhs.AddAction(delegate(int n, IList<object> vals, ref object val)\n");

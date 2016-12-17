@@ -41,7 +41,7 @@ namespace Yacc
 {
 	class MakeParser<ActionType>
 	{
-#if ! lint
+#if !lint
 		static readonly string sccsid = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #endif // not lint
 
@@ -71,8 +71,7 @@ namespace Yacc
 
 		public void Execute()
 		{
-			foreach (State<ActionType> state in m_Lr0.States)
-			{
+			foreach (State<ActionType> state in m_Lr0.States) {
 				ParseActions(state);
 			}
 
@@ -100,15 +99,12 @@ namespace Yacc
 			Symbol symbol;
 
 			sp = state.Shifts;
-			if (sp != null)
-			{
+			if (sp != null) {
 				to_state = sp.Shift;
-				for (i = sp.Shift.Length - 1; i >= 0; i--)
-				{
+				for (i = sp.Shift.Length - 1; i >= 0; i--) {
 					k = to_state[i].Number;
 					symbol = m_Lr0.States[k].AccessingSymbol;
-					if (m_Yacc.IsToken(symbol.Index))
-					{
+					if (m_Yacc.IsToken(symbol.Index)) {
 						Rule<ActionType> rule = null;
 						temp = new Action<ActionType>();
 						temp.Symbol = symbol;
@@ -117,8 +113,7 @@ namespace Yacc
 						temp.ActionCode = ActionCode.SHIFT;
 						temp.Associate = symbol.Association;
 						state.Parser.AddFirst(temp);
-						if (rule != null)
-						{
+						if (rule != null) {
 							rule.Number = (short)k;
 						}
 					}
@@ -134,12 +129,10 @@ namespace Yacc
 
 			m = m_Lalr.lookaheads[state.Number];
 			n = m_Lalr.lookaheads[state.Number + 1];
-			for (i = m; i < n; i++)
-			{
+			for (i = m; i < n; i++) {
 				ruleno = m_Lalr.LAruleno[i];
 				rowp = i * m_Lalr.tokensetsize;
-				for (j = m_Yacc.m_TokenCount - 1; j >= 0; j--)
-				{
+				for (j = m_Yacc.m_TokenCount - 1; j >= 0; j--) {
 					if (Defs.BIT(m_Lalr.LA, rowp, j) != 0)
 						AddReduce(state.Parser, ruleno, m_Yacc.m_Symbols[j]);
 				}
@@ -155,15 +148,13 @@ namespace Yacc
 			for (next = actions.First; next != null && next.Value.Symbol.Index < symbol.Index; next = next.Next)
 				prev = next;
 
-			while (next != null && next.Value.Symbol.Index == symbol.Index && next.Value.ActionCode == ActionCode.SHIFT)
-			{
+			while (next != null && next.Value.Symbol.Index == symbol.Index && next.Value.ActionCode == ActionCode.SHIFT) {
 				prev = next;
 				next = next.Next;
 			}
 
 			while (next != null && next.Value.Symbol.Index == symbol.Index &&
-				next.Value.ActionCode == ActionCode.REDUCE && next.Value.Rule.Number < ruleno)
-			{
+				next.Value.ActionCode == ActionCode.REDUCE && next.Value.Rule.Number < ruleno) {
 				prev = next;
 				next = next.Next;
 			}
@@ -192,8 +183,7 @@ namespace Yacc
 			p = m_Lr0.States[0].Shifts;
 			to_state = p.Shift;
 			goal = m_Yacc.m_Items[1];
-			for (i = p.Shift.Length - 1; i >= 0; --i)
-			{
+			for (i = p.Shift.Length - 1; i >= 0; --i) {
 				m_Yacc.m_FinalState = to_state[i].Number;
 				if (m_Lr0.States[m_Yacc.m_FinalState].AccessingSymbol.Index == goal) break;
 			}
@@ -209,10 +199,8 @@ namespace Yacc
 			for (i = 0; i < m_Yacc.m_RuleCount; ++i)
 				rules_used[i] = 0;
 
-			foreach (State<ActionType> core in m_Lr0.States)
-			{
-				foreach (Action<ActionType> p in core.Parser)
-				{
+			foreach (State<ActionType> core in m_Lr0.States) {
+				foreach (Action<ActionType> p in core.Parser) {
 					if (p.ActionCode == ActionCode.REDUCE && p.Suppressed == 0)
 						rules_used[p.Rule.Number] = 1;
 				}
@@ -240,59 +228,46 @@ namespace Yacc
 			RRtotal = 0;
 			SRconflicts = new short[m_Lr0.States.Count];
 			RRconflicts = new short[m_Lr0.States.Count];
-			for (i = 0; i < m_Lr0.States.Count; i++)
-			{
+			for (i = 0; i < m_Lr0.States.Count; i++) {
 				SRcount = 0;
 				RRcount = 0;
 				symbol = null;
-				foreach (Action<ActionType> p in m_Lr0.States[i].Parser)
-				{
-					if (p.Symbol != symbol)
-					{
+				foreach (Action<ActionType> p in m_Lr0.States[i].Parser) {
+					if (p.Symbol != symbol) {
 						pref = p;
 						symbol = p.Symbol;
 					}
-					else if (i == m_Yacc.m_FinalState && symbol == m_Yacc.m_Symbols[0])
-					{
+					else if (i == m_Yacc.m_FinalState && symbol == m_Yacc.m_Symbols[0]) {
 						SRcount++;
 						p.Suppressed = 1;
 					}
-					else if (pref.ActionCode == ActionCode.SHIFT)
-					{
-						if (pref.Prec > 0 && p.Prec > 0)
-						{
-							if (pref.Prec < p.Prec)
-							{
+					else if (pref.ActionCode == ActionCode.SHIFT) {
+						if (pref.Prec > 0 && p.Prec > 0) {
+							if (pref.Prec < p.Prec) {
 								pref.Suppressed = 2;
 								pref = p;
 							}
-							else if (pref.Prec > p.Prec)
-							{
+							else if (pref.Prec > p.Prec) {
 								p.Suppressed = 2;
 							}
-							else if (pref.Associate == KeywordCode.LEFT)
-							{
+							else if (pref.Associate == KeywordCode.LEFT) {
 								pref.Suppressed = 2;
 								pref = p;
 							}
-							else if (pref.Associate == KeywordCode.RIGHT)
-							{
+							else if (pref.Associate == KeywordCode.RIGHT) {
 								p.Suppressed = 2;
 							}
-							else
-							{
+							else {
 								pref.Suppressed = 2;
 								p.Suppressed = 2;
 							}
 						}
-						else
-						{
+						else {
 							SRcount++;
 							p.Suppressed = 1;
 						}
 					}
-					else
-					{
+					else {
 						RRcount++;
 						p.Suppressed = 1;
 					}
@@ -330,12 +305,10 @@ namespace Yacc
 
 			count = 0;
 			ruleno = 0;
-			foreach (Action<ActionType> p in state.Parser)
-			{
+			foreach (Action<ActionType> p in state.Parser) {
 				if (p.ActionCode == ActionCode.SHIFT && p.Suppressed == 0)
 					return 0;
-				else if (p.ActionCode == ActionCode.REDUCE && p.Suppressed == 0)
-				{
+				else if (p.ActionCode == ActionCode.REDUCE && p.Suppressed == 0) {
 					if (ruleno > 0 && p.Rule.Number != ruleno)
 						return 0;
 					if (p.Symbol.Index != 1)
